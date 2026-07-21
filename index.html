@@ -242,6 +242,99 @@
   }
   .btn-leido svg{width:17px; height:17px;}
   .btn-leido:active{transform:scale(.96); filter:brightness(.95);}
+  .btn-leido.celebrando{animation:btn-logro .85s cubic-bezier(.2,.8,.2,1);}
+  @keyframes btn-logro{
+    0%{transform:scale(1); box-shadow:0 0 0 0 rgba(197,236,210,.65);}
+    35%{transform:scale(.94);}
+    58%{transform:scale(1.08); box-shadow:0 0 0 18px rgba(197,236,210,0);}
+    100%{transform:scale(1);}
+  }
+  .plan.celebrando{animation:plan-logro 1.15s cubic-bezier(.2,.75,.2,1);}
+  @keyframes plan-logro{
+    0%,100%{transform:translateZ(0); box-shadow:0 14px 34px rgba(22,56,38,.28);}
+    38%{transform:translateY(-4px) scale(1.012); box-shadow:0 23px 52px rgba(22,56,38,.42), 0 0 0 2px rgba(197,236,210,.28);}
+  }
+
+  /* Celebración al completar una lectura */
+  .celebracion-plan{
+    position:fixed; inset:0; z-index:250; pointer-events:none;
+    display:flex; align-items:center; justify-content:center;
+    opacity:0; visibility:hidden;
+  }
+  .celebracion-plan.activa{
+    visibility:visible;
+    animation:celebracion-capa 1.95s ease both;
+  }
+  .celebracion-fondo{
+    position:absolute; inset:0;
+    background:radial-gradient(circle at center, rgba(22,56,38,.16), rgba(22,56,38,0) 55%);
+    backdrop-filter:blur(1.5px); -webkit-backdrop-filter:blur(1.5px);
+  }
+  .celebracion-contenido{
+    position:relative; z-index:2;
+    width:min(86vw, 390px);
+    padding:28px 25px 24px;
+    border-radius:30px;
+    text-align:center;
+    color:#fff;
+    background:linear-gradient(155deg, rgba(45,79,60,.97), rgba(22,56,38,.98));
+    border:1px solid rgba(197,236,210,.36);
+    box-shadow:0 28px 75px rgba(22,56,38,.42), inset 0 1px 0 rgba(255,255,255,.18);
+    overflow:hidden;
+  }
+  .celebracion-contenido::before{
+    content:""; position:absolute; width:220px; height:220px; border-radius:50%;
+    left:50%; top:-150px; transform:translateX(-50%);
+    background:radial-gradient(circle, rgba(197,236,210,.38), transparent 68%);
+  }
+  .celebracion-medalla{
+    position:relative; z-index:1;
+    width:84px; height:84px; margin:0 auto 14px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    color:var(--primary);
+    background:linear-gradient(145deg, #f3fff6, var(--primary-fixed));
+    box-shadow:0 12px 30px rgba(0,0,0,.20), 0 0 0 9px rgba(197,236,210,.12);
+  }
+  .celebracion-medalla svg{width:43px; height:43px;}
+  .celebracion-titulo{
+    position:relative; z-index:1;
+    font-family:var(--font-display); font-size:26px; line-height:1.2; font-weight:800;
+    letter-spacing:-.025em;
+  }
+  .celebracion-subtitulo{
+    position:relative; z-index:1;
+    margin-top:8px; font-size:14px; line-height:1.45; font-weight:500;
+    color:var(--primary-fixed-dim);
+  }
+  .celebracion-particulas{position:absolute; inset:0; z-index:3; overflow:hidden;}
+  .celebracion-particula{
+    position:absolute; left:50%; top:50%;
+    width:var(--tam); height:var(--tam);
+    border-radius:var(--radio, 50%);
+    background:var(--tono);
+    opacity:0;
+  }
+  .celebracion-plan.activa .celebracion-contenido{animation:celebracion-tarjeta 1.65s cubic-bezier(.2,.8,.2,1) both;}
+  .celebracion-plan.activa .celebracion-medalla{animation:celebracion-medalla 1.25s cubic-bezier(.17,.89,.32,1.35) both;}
+  .celebracion-plan.activa .celebracion-particula{animation:particula-vuela 1.35s cubic-bezier(.18,.7,.25,1) var(--retraso) both;}
+  @keyframes celebracion-capa{0%{opacity:0} 12%,72%{opacity:1} 100%{opacity:0}}
+  @keyframes celebracion-tarjeta{
+    0%{opacity:0; transform:translateY(24px) scale(.78);}
+    28%{opacity:1; transform:translateY(0) scale(1.035);}
+    44%,78%{opacity:1; transform:scale(1);}
+    100%{opacity:0; transform:translateY(-10px) scale(.98);}
+  }
+  @keyframes celebracion-medalla{
+    0%{opacity:0; transform:rotate(-18deg) scale(.3);}
+    45%{opacity:1; transform:rotate(7deg) scale(1.13);}
+    66%,100%{opacity:1; transform:rotate(0) scale(1);}
+  }
+  @keyframes particula-vuela{
+    0%{opacity:0; transform:translate(-50%,-50%) rotate(0) scale(.2);}
+    18%{opacity:1;}
+    100%{opacity:0; transform:translate(calc(-50% + var(--x)), calc(-50% + var(--y))) rotate(var(--giro)) scale(1);}
+  }
+
   .plan-barra{
     margin-top:22px;
     height:7px; background:rgba(255,255,255,.16);
@@ -322,15 +415,59 @@
   .total-caps b{color:var(--primary); font-weight:700;}
 
   .registro-preview{
-    margin:-10px 0 18px;
-    padding:11px 14px;
-    border-radius:var(--r-md);
-    background:rgba(209,220,209,.42);
-    border:1px solid rgba(139,168,142,.28);
+    position:relative;
+    margin:-4px 0 22px;
+    padding:18px 18px;
+    border-radius:20px;
+    background:
+      radial-gradient(circle at 92% 0%, rgba(197,236,210,.78), transparent 42%),
+      linear-gradient(145deg, rgba(255,255,255,.97), rgba(231,242,233,.92));
+    border:1px solid rgba(74,101,78,.20);
+    box-shadow:0 12px 28px rgba(45,79,60,.10), inset 0 1px 0 rgba(255,255,255,.9);
     color:var(--on-surface-variant);
-    font-size:12.5px; line-height:1.45; font-weight:500;
+    overflow:hidden;
+    display:flex; align-items:center; gap:15px;
+    transition:transform .25s ease, box-shadow .25s ease, border-color .25s ease;
   }
-  .registro-preview b{color:var(--primary); font-weight:700;}
+  .registro-preview::after{
+    content:""; position:absolute; inset:auto -32px -44px auto;
+    width:110px; height:110px; border-radius:50%;
+    background:rgba(139,168,142,.10); pointer-events:none;
+  }
+  .registro-preview:hover{
+    transform:translateY(-1px);
+    box-shadow:0 16px 34px rgba(45,79,60,.13), inset 0 1px 0 rgba(255,255,255,.9);
+  }
+  .registro-preview-icono{
+    width:52px; height:52px; border-radius:16px; flex:none;
+    display:flex; align-items:center; justify-content:center;
+    color:#fff;
+    background:linear-gradient(145deg, var(--secondary), var(--primary));
+    box-shadow:0 8px 18px rgba(22,56,38,.22);
+  }
+  .registro-preview-icono svg{width:26px; height:26px;}
+  .registro-preview-contenido{position:relative; z-index:1; min-width:0;}
+  .registro-preview-etiqueta{
+    display:block; margin-bottom:3px;
+    font-size:11px; line-height:1.25; font-weight:800; letter-spacing:.12em;
+    text-transform:uppercase; color:var(--secondary);
+  }
+  .registro-preview-capitulos{
+    display:block;
+    font-family:var(--font-display);
+    font-size:21px; line-height:1.25; font-weight:800; letter-spacing:-.015em;
+    color:var(--primary); overflow-wrap:anywhere;
+  }
+  .registro-preview-nota{
+    display:block; margin-top:5px;
+    font-size:12.5px; line-height:1.45; font-weight:500;
+    color:var(--on-surface-variant);
+  }
+  .registro-preview.completado{
+    background:linear-gradient(145deg, rgba(255,255,255,.97), rgba(218,229,218,.90));
+    border-color:rgba(139,168,142,.30);
+  }
+  .registro-preview.completado .registro-preview-icono{background:linear-gradient(145deg, #8ba88e, #4a654e);}
 
   /* Botón selector de fecha */
   .fecha-btn{
@@ -585,7 +722,7 @@
   footer{
     position:relative; z-index:1;
     text-align:center; padding:8px 20px 44px;
-    font-size:12px; color:var(--outline); font-weight:500;
+    font-size:12px; line-height:1.65; color:var(--outline); font-weight:500;
   }
 
   .toast{
@@ -604,6 +741,13 @@
 
   @media (prefers-reduced-motion: reduce){
     *{transition:none !important; animation:none !important;}
+  }
+  @media (max-width:520px){
+    .registro-preview{padding:16px; gap:12px;}
+    .registro-preview-icono{width:46px; height:46px; border-radius:14px;}
+    .registro-preview-capitulos{font-size:18px;}
+    .celebracion-contenido{padding:25px 20px 22px;}
+    .celebracion-titulo{font-size:23px;}
   }
   @media (max-width:380px){
     .hero .hoy-num{font-size:68px;}
@@ -759,7 +903,7 @@
       <button type="button" data-suma="5">+5</button>
     </div>
 
-    <div class="registro-preview" id="registroPreview">Se registrará el siguiente capítulo pendiente del libro seleccionado.</div>
+    <div class="registro-preview" id="registroPreview" aria-live="polite"></div>
 
     <button class="btn-primary" id="btnRegistrar">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8.5 12.5l2.5 2.5 4.5-5"/></svg>
@@ -832,7 +976,20 @@
 
 </main>
 
-<footer>Fortalece tu amistad con Jehová examinando las Escrituras diariamente.</footer>
+<footer>Fortalece tu amistad con Jehová<br>examinando las Escrituras diariamente.</footer>
+
+<div class="celebracion-plan" id="celebracionPlan" aria-hidden="true">
+  <div class="celebracion-fondo"></div>
+  <div class="celebracion-particulas" id="celebracionParticulas"></div>
+  <div class="celebracion-contenido">
+    <div class="celebracion-medalla">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12.5l5 5L20 6.5"/></svg>
+    </div>
+    <div class="celebracion-titulo">¡Lectura completada!</div>
+    <div class="celebracion-subtitulo" id="celebracionSubtitulo">Tu constancia fortalece tu amistad con Jehová.</div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -1853,6 +2010,48 @@ function empezarPlan(){
   mostrarToast("Plan iniciado: " + LIBROS[idx][0] + " 🌿");
 }
 
+var celebracionTimer = null;
+function lanzarCelebracionPlan(nombre, etiqueta){
+  var capa = document.getElementById("celebracionPlan");
+  var particulas = document.getElementById("celebracionParticulas");
+  var subtitulo = document.getElementById("celebracionSubtitulo");
+  var boton = document.getElementById("btnPlanLeido");
+  var tarjeta = document.getElementById("planCard");
+  if(!capa || !particulas) return;
+
+  subtitulo.textContent = nombre + " " + etiqueta + " · ¡Sigue fortaleciendo este hermoso hábito!";
+  var tonos = ["#c5ecd2","#a9cfb7","#ffffff","#8ba88e","#d9f5e1"];
+  var html = "";
+  for(var i=0;i<30;i++){
+    var angulo = (Math.PI * 2 * i / 30) + ((i%3)-1)*.08;
+    var distancia = 120 + (i%6)*18;
+    var x = Math.round(Math.cos(angulo)*distancia);
+    var y = Math.round(Math.sin(angulo)*distancia);
+    var tam = 5 + (i%4)*2;
+    var radio = (i%3===0) ? "2px" : "50%";
+    var giro = (120 + i*37) + "deg";
+    var retraso = ((i%7)*.025) + "s";
+    html += '<i class="celebracion-particula" style="--x:'+x+'px;--y:'+y+'px;--tam:'+tam+'px;--radio:'+radio+';--giro:'+giro+';--retraso:'+retraso+';--tono:'+tonos[i%tonos.length]+'"></i>';
+  }
+  particulas.innerHTML = html;
+
+  clearTimeout(celebracionTimer);
+  capa.classList.remove("activa");
+  boton.classList.remove("celebrando");
+  tarjeta.classList.remove("celebrando");
+  void capa.offsetWidth;
+  capa.classList.add("activa");
+  boton.classList.add("celebrando");
+  tarjeta.classList.add("celebrando");
+  try{ if(navigator.vibrate){ navigator.vibrate([35,35,60]); } }catch(e){}
+  celebracionTimer = setTimeout(function(){
+    capa.classList.remove("activa");
+    boton.classList.remove("celebrando");
+    tarjeta.classList.remove("celebrando");
+    particulas.innerHTML = "";
+  }, 2000);
+}
+
 function marcarPlanLeido(){
   var p = estado.plan;
   if(!p) return;
@@ -1869,6 +2068,7 @@ function marcarPlanLeido(){
   actualizarDespuesDeCambio();
 
   var nombre = LIBROS[p.libro][0];
+  lanzarCelebracionPlan(nombre, etiqueta);
   if(estado.plan.completados >= grupos.length){
     mostrarToast("¡Terminaste " + nombre + "! 🌿");
   }else if(nuevos.length === 0){
@@ -1954,6 +2154,12 @@ var calAbierto = false;
 var btnFecha = document.getElementById("btnFecha");
 var calEl = document.getElementById("calendario");
 
+function cerrarCalendario(){
+  calAbierto = false;
+  calEl.classList.remove("abierto");
+  btnFecha.classList.remove("abierto");
+}
+
 function seleccionarFecha(clave, silencioso){
   fechaSel = clave;
   var d = fechaDesdeClave(clave);
@@ -2004,13 +2210,20 @@ function pintarCalendario(){
 }
 
 btnFecha.addEventListener("click", function(){
-  calAbierto = !calAbierto;
-  calEl.classList.toggle("abierto", calAbierto);
-  btnFecha.classList.toggle("abierto", calAbierto);
   if(calAbierto){
-    calMes = fechaDesdeClave(fechaSel);
-    calMes.setDate(1);
-    pintarCalendario();
+    cerrarCalendario();
+    return;
+  }
+  calAbierto = true;
+  calEl.classList.add("abierto");
+  btnFecha.classList.add("abierto");
+  calMes = fechaDesdeClave(fechaSel);
+  calMes.setDate(1);
+  pintarCalendario();
+});
+document.addEventListener("pointerdown", function(e){
+  if(calAbierto && !calEl.contains(e.target) && !btnFecha.contains(e.target)){
+    cerrarCalendario();
   }
 });
 document.getElementById("calPrev").addEventListener("click", function(){
@@ -2048,10 +2261,23 @@ function pintarRegistroPreview(){
   var idx = +selLibro.value;
   var cantidad = Math.max(1, parseInt(inpCaps.value,10) || 1);
   var pendientes = capitulosPendientes(idx,cantidad);
+  var icono = '<div class="registro-preview-icono" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/><path d="M9 7h7M9 11h5"/></svg></div>';
   if(!pendientes.length){
-    el.innerHTML = "<b>Libro completado:</b> no quedan capítulos pendientes en " + LIBROS[idx][0] + ".";
+    el.classList.add("completado");
+    el.innerHTML = icono
+      + '<div class="registro-preview-contenido">'
+      + '<span class="registro-preview-etiqueta">Libro completado</span>'
+      + '<strong class="registro-preview-capitulos">' + LIBROS[idx][0] + '</strong>'
+      + '<span class="registro-preview-nota">No quedan capítulos pendientes por registrar.</span>'
+      + '</div>';
   }else{
-    el.innerHTML = "<b>Se registrará:</b> " + descripcionCapitulos(idx,pendientes) + ". Los capítulos ya guardados nunca se repiten.";
+    el.classList.remove("completado");
+    el.innerHTML = icono
+      + '<div class="registro-preview-contenido">'
+      + '<span class="registro-preview-etiqueta">Se registrará</span>'
+      + '<strong class="registro-preview-capitulos">' + descripcionCapitulos(idx,pendientes) + '</strong>'
+      + '<span class="registro-preview-nota">Puedes registrar con tranquilidad: los capítulos guardados nunca se repiten.</span>'
+      + '</div>';
   }
 }
 
