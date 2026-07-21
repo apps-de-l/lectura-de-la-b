@@ -321,6 +321,17 @@
   }
   .total-caps b{color:var(--primary); font-weight:700;}
 
+  .registro-preview{
+    margin:-10px 0 18px;
+    padding:11px 14px;
+    border-radius:var(--r-md);
+    background:rgba(209,220,209,.42);
+    border:1px solid rgba(139,168,142,.28);
+    color:var(--on-surface-variant);
+    font-size:12.5px; line-height:1.45; font-weight:500;
+  }
+  .registro-preview b{color:var(--primary); font-weight:700;}
+
   /* Botón selector de fecha */
   .fecha-btn{
     width:100%;
@@ -747,6 +758,8 @@
       <button type="button" data-suma="3">+3</button>
       <button type="button" data-suma="5">+5</button>
     </div>
+
+    <div class="registro-preview" id="registroPreview">Se registrará el siguiente capítulo pendiente del libro seleccionado.</div>
 
     <button class="btn-primary" id="btnRegistrar">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8.5 12.5l2.5 2.5 4.5-5"/></svg>
@@ -1471,19 +1484,155 @@ function capsDeGrupo(etiqueta){
 }
 
 /* ============================================================
-   ESTADO
+   ESTADO CON CAPÍTULOS ÚNICOS
+   Cada capítulo se guarda una sola vez con su libro, número y fecha.
+   Así «Registrar avance» y «Ya leí esta parte» nunca duplican puntos.
    ============================================================ */
 var KEY = "lecturaBiblia_v1";
-var estado = { libros:{}, log:{}, ultimoLibro:0, plan:null, _t:0 };
-/* plan = { libro: índice en LIBROS, completados: grupos ya leídos, inicio: "YYYY-MM-DD" } */
+var estado = { libros:{}, log:{}, capitulos:{}, ultimoLibro:0, plan:null, _t:0, _orden:0 };
+/* plan = { libro: índice en LIBROS, completados: primer grupo pendiente, inicio: "YYYY-MM-DD" } */
+
+function idCapitulo(libro, capitulo){ return libro + ":" + capitulo; }
+function datosIdCapitulo(id){
+  var p = String(id).split(":");
+  return { libro:parseInt(p[0],10), capitulo:parseInt(p[1],10) };
+}
+function registroCapitulo(libro, capitulo){ return estado.capitulos[idCapitulo(libro, capitulo)] || null; }
+function estaLeido(libro, capitulo){ return !!registroCapitulo(libro, capitulo); }
+
+function capitulosDelGrupo(etiqueta){
+  if(etiqueta === "116-119:63") return [116,117,118];
+  if(etiqueta === "119:64-176") return [119];
+  var limpio = etiqueta.split(":")[0];
+  var p = limpio.split("-");
+  var ini = parseInt(p[0],10), fin = p.length > 1 ? parseInt(p[1],10) : ini;
+  var lista = [];
+  for(var c=ini; c<=fin; c++) lista.push(c);
+  return lista;
+}
+
+function formatoNumeros(lista){
+  if(!lista.length) return "";
+  var a = lista.slice().sort(function(x,y){ return x-y; });
+  var partes = [], ini = a[0], ant = a[0];
+  for(var i=1;i<=a.length;i++){
+    var n = a[i];
+    if(n === ant + 1){ ant = n; continue; }
+    partes.push(ini === ant ? String(ini) : ini + "-" + ant);
+    ini = ant = n;
+  }
+  return partes.join(", ");
+}
+function descripcionCapitulos(libro, lista){
+  return LIBROS[libro][0] + " " + formatoNumeros(lista);
+}
+
+function siguienteOrden(){
+  estado._orden = Math.max(estado._orden || 0, Date.now()) + 1;
+  return estado._orden;
+}
+
+function registrarCapitulos(libro, lista, fecha){
+  var nuevos = [];
+  lista.forEach(function(capitulo){
+    var id = idCapitulo(libro, capitulo);
+    if(!estado.capitulos[id]){
+      estado.capitulos[id] = { fecha:fecha, orden:siguienteOrden() };
+      nuevos.push(capitulo);
+    }
+  });
+  return nuevos;
+}
+
+function capitulosPendientes(libro, cantidad){
+  var total = LIBROS[libro][1], lista = [];
+  for(var c=1; c<=total && lista.length<cantidad; c++){
+    if(!estaLeido(libro,c)) lista.push(c);
+  }
+  return lista;
+}
+
+function registrosDeFecha(fecha){
+  var lista = [];
+  Object.keys(estado.capitulos).forEach(function(id){
+    var r = estado.capitulos[id];
+    if(r && r.fecha === fecha){
+      var d = datosIdCapitulo(id);
+      lista.push({ id:id, libro:d.libro, capitulo:d.capitulo, orden:r.orden || 0 });
+    }
+  });
+  lista.sort(function(a,b){ return a.orden-b.orden; });
+  return lista;
+}
+
+function reconstruirResumenes(){
+  var libros = {}, log = {};
+  Object.keys(estado.capitulos).forEach(function(id){
+    var r = estado.capitulos[id];
+    var d = datosIdCapitulo(id);
+    if(!r || !r.fecha || isNaN(d.libro) || isNaN(d.capitulo) || !LIBROS[d.libro]) return;
+    var nombre = LIBROS[d.libro][0];
+    libros[nombre] = (libros[nombre] || 0) + 1;
+    log[r.fecha] = (log[r.fecha] || 0) + 1;
+    estado._orden = Math.max(estado._orden || 0, r.orden || 0);
+  });
+  estado.libros = libros;
+  estado.log = log;
+}
+
+function sincronizarPlan(){
+  if(!estado.plan || !PLAN_GRUPOS[estado.plan.libro]) return;
+  var libro = estado.plan.libro;
+  var grupos = PLAN_GRUPOS[libro];
+  var pendiente = grupos.length;
+  for(var i=0;i<grupos.length;i++){
+    var caps = capitulosDelGrupo(grupos[i]);
+    var completo = caps.every(function(c){ return estaLeido(libro,c); });
+    if(!completo){ pendiente = i; break; }
+  }
+  estado.plan.completados = pendiente;
+}
+
+function migrarDatosAnteriores(d){
+  var ids = [], usados = {};
+  var librosAnt = d.libros || {};
+  LIBROS.forEach(function(libro, idx){
+    var n = Math.max(0, Math.min(libro[1], parseInt(librosAnt[libro[0]],10) || 0));
+    for(var c=1;c<=n;c++){
+      var id = idCapitulo(idx,c);
+      ids.push(id); usados[id] = true;
+    }
+  });
+
+  var totalFechas = 0;
+  Object.keys(d.log || {}).forEach(function(k){ totalFechas += Math.max(0, parseInt(d.log[k],10) || 0); });
+  if(totalFechas > ids.length){
+    var preferido = (typeof d.ultimoLibro === "number") ? d.ultimoLibro : 0;
+    var ordenLibros = [preferido];
+    for(var b=0;b<LIBROS.length;b++) if(b !== preferido) ordenLibros.push(b);
+    ordenLibros.some(function(idx){
+      for(var c=1;c<=LIBROS[idx][1] && ids.length<totalFechas;c++){
+        var id = idCapitulo(idx,c);
+        if(!usados[id]){ ids.push(id); usados[id] = true; }
+      }
+      return ids.length >= totalFechas;
+    });
+  }
+
+  var pos = 0, orden = Date.now() - Math.max(1, ids.length);
+  Object.keys(d.log || {}).sort().forEach(function(fecha){
+    var n = Math.max(0, parseInt(d.log[fecha],10) || 0);
+    for(var i=0;i<n && pos<ids.length;i++,pos++){
+      estado.capitulos[ids[pos]] = { fecha:fecha, orden:++orden };
+    }
+  });
+  var fechaResto = Object.keys(d.log || {}).sort().pop() || hoyClave();
+  while(pos<ids.length){ estado.capitulos[ids[pos++]] = { fecha:fechaResto, orden:++orden }; }
+  estado._orden = orden;
+}
 
 /* ============================================================
    PERSISTENCIA AGRESIVA
-   1) localStorage (síncrono, inmediato)
-   2) Copia espejo en IndexedDB (sobrevive en más escenarios)
-   3) navigator.storage.persist() para pedir almacenamiento protegido
-   4) Re-guardado en beforeunload / pagehide / visibilitychange
-   Al abrir, se restaura la copia MÁS RECIENTE de las dos.
    ============================================================ */
 var idb = null;
 function abrirIDB(){
@@ -1520,13 +1669,26 @@ function validar(d){
   return (d && typeof d === "object" && d.log && typeof d.log === "object") ? d : null;
 }
 function adoptar(d){
-  estado.libros = d.libros || {};
-  estado.log = d.log || {};
+  estado = { libros:{}, log:{}, capitulos:{}, ultimoLibro:0, plan:null, _t:0, _orden:0 };
   estado.ultimoLibro = (typeof d.ultimoLibro === "number") ? d.ultimoLibro : 0;
   estado.plan = (d.plan && typeof d.plan.libro === "number") ? d.plan : null;
   estado._t = d._t || 0;
+  estado._orden = d._orden || 0;
+  if(d.capitulos && typeof d.capitulos === "object"){
+    Object.keys(d.capitulos).forEach(function(id){
+      var r = d.capitulos[id];
+      if(typeof r === "string") estado.capitulos[id] = { fecha:r, orden:siguienteOrden() };
+      else if(r && r.fecha) estado.capitulos[id] = { fecha:r.fecha, orden:r.orden || siguienteOrden() };
+    });
+  }else{
+    migrarDatosAnteriores(d);
+  }
+  reconstruirResumenes();
+  sincronizarPlan();
 }
 function guardar(){
+  reconstruirResumenes();
+  sincronizarPlan();
   estado._t = Date.now();
   var json = JSON.stringify(estado);
   try{ localStorage.setItem(KEY, json); }catch(e){}
@@ -1540,18 +1702,15 @@ function cargarInicial(){
     return idbLeer();
   }).then(function(bd){
     bd = validar(bd);
-    // Se queda con la copia más reciente de las dos
     if(ls && bd){ adoptar((bd._t||0) > (ls._t||0) ? bd : ls); }
     else if(ls){ adoptar(ls); }
     else if(bd){ adoptar(bd); }
-    // Sincroniza ambas copias y pide almacenamiento persistente
     guardar();
     try{
       if(navigator.storage && navigator.storage.persist){ navigator.storage.persist(); }
     }catch(e){}
   });
 }
-// Red de seguridad: guardar al ocultar/cerrar/recargar la página
 window.addEventListener("beforeunload", guardar);
 window.addEventListener("pagehide", guardar);
 document.addEventListener("visibilitychange", function(){
@@ -1589,11 +1748,7 @@ function fechaBonita(k){
    CÁLCULOS
    ============================================================ */
 function capsDe(k){ return estado.log[k] || 0; }
-function totalGeneral(){
-  var t = 0;
-  for(var k in estado.log){ t += estado.log[k]; }
-  return t;
-}
+function totalGeneral(){ return Object.keys(estado.capitulos).length; }
 function totalSemana(){
   var ini = inicioSemana(new Date()), t = 0;
   for(var i=0;i<7;i++){
@@ -1610,76 +1765,80 @@ function racha(){
 }
 
 /* ============================================================
-   ACCIONES
+   ACCIONES SIN DUPLICADOS
    ============================================================ */
-function sumarAlDia(clave, n){
-  var nuevo = Math.max(0, capsDe(clave) + n);
-  if(nuevo === 0){ delete estado.log[clave]; } else { estado.log[clave] = nuevo; }
+function actualizarDespuesDeCambio(){
+  reconstruirResumenes();
+  sincronizarPlan();
+  guardar();
+  pintarTodo();
 }
 
 function registrar(){
   var idx = +selLibro.value;
-  var caps = parseInt(inpCaps.value, 10);
-  if(isNaN(caps) || caps < 1){ mostrarToast("Escribe cuántos capítulos leíste"); return; }
-  var nombre = LIBROS[idx][0], totalLibro = LIBROS[idx][1];
-  var leidos = estado.libros[nombre] || 0;
-  var aplicables = Math.min(caps, totalLibro - leidos);
-  if(aplicables <= 0){ mostrarToast("Ya terminaste " + nombre + " 🌿"); return; }
+  var cantidad = parseInt(inpCaps.value, 10);
+  if(isNaN(cantidad) || cantidad < 1){ mostrarToast("Escribe cuántos capítulos leíste"); return; }
+  var pendientes = capitulosPendientes(idx, cantidad);
+  if(!pendientes.length){ mostrarToast("Ya terminaste " + LIBROS[idx][0] + " 🌿"); return; }
 
   var esHoy = (fechaSel === hoyClave());
-  estado.libros[nombre] = leidos + aplicables;
-  sumarAlDia(fechaSel, aplicables);
+  var nuevos = registrarCapitulos(idx, pendientes, fechaSel);
   estado.ultimoLibro = idx;
-  guardar();
   inpCaps.value = 1;
+  actualizarDespuesDeCambio();
 
-  var msg;
-  if(estado.libros[nombre] === totalLibro){
-    msg = "¡Terminaste " + nombre + "! 🌿";
-  }else if(esHoy){
-    msg = "+" + aplicables + (aplicables===1?" capítulo registrado":" capítulos registrados");
-  }else{
+  var texto = descripcionCapitulos(idx, nuevos);
+  var msg = texto + (nuevos.length===1 ? " registrado" : " registrados");
+  if(!esHoy){
     var d = fechaDesdeClave(fechaSel);
-    msg = "+" + aplicables + " para el " + d.getDate() + " de " + MESES[d.getMonth()];
+    msg += " para el " + d.getDate() + " de " + MESES[d.getMonth()];
+    seleccionarFecha(hoyClave(), true);
   }
-  // Después de registrar un día pasado, vuelve a "Hoy" para evitar registros accidentales
-  if(!esHoy){ seleccionarFecha(hoyClave(), true); }
-  pintarTodo();
+  if(!capitulosPendientes(idx,1).length) msg = "¡Terminaste " + LIBROS[idx][0] + "! 🌿";
   mostrarToast(msg);
 }
 
 function ajustarDia(clave, n){
-  if(n < 0 && capsDe(clave) === 0){ mostrarToast("Ese día no tiene capítulos registrados"); return; }
-  sumarAlDia(clave, n);
-  guardar();
-  pintarTodo();
-  var esHoy = (clave === hoyClave());
-  mostrarToast((n > 0 ? "+1 capítulo" : "−1 capítulo") + (esHoy ? " de hoy" : ""));
+  if(n < 0){
+    var registros = registrosDeFecha(clave);
+    if(!registros.length){ mostrarToast("Ese día no tiene capítulos registrados"); return; }
+    var ultimo = registros[registros.length-1];
+    delete estado.capitulos[ultimo.id];
+    actualizarDespuesDeCambio();
+    mostrarToast("Se quitó " + descripcionCapitulos(ultimo.libro,[ultimo.capitulo]));
+    return;
+  }
+
+  var delDia = registrosDeFecha(clave);
+  var idx = delDia.length ? delDia[delDia.length-1].libro : +selLibro.value;
+  var pendientes = capitulosPendientes(idx,1);
+  if(!pendientes.length){ mostrarToast("Ya terminaste " + LIBROS[idx][0] + " 🌿"); return; }
+  registrarCapitulos(idx, pendientes, clave);
+  estado.ultimoLibro = idx;
+  actualizarDespuesDeCambio();
+  mostrarToast("Se añadió " + descripcionCapitulos(idx,pendientes) + (clave===hoyClave()?" a hoy":" al día elegido"));
 }
 
 function borrarDia(clave){
-  var v = capsDe(clave);
+  var registros = registrosDeFecha(clave);
+  var v = registros.length;
   if(v === 0) return;
-  var ok = window.confirm("¿Borrar los " + v + (v===1?" capítulo":" capítulos") + " del " + fechaBonita(clave) + "?\n\nEsta acción no se puede deshacer.");
+  var ok = window.confirm("¿Borrar los " + v + (v===1?" capítulo":" capítulos") + " del " + fechaBonita(clave) + "?\n\nTambién se actualizará el progreso de cada libro. Esta acción no se puede deshacer.");
   if(!ok) return;
-  delete estado.log[clave];
-  guardar();
-  pintarTodo();
+  registros.forEach(function(r){ delete estado.capitulos[r.id]; });
+  actualizarDespuesDeCambio();
   mostrarToast("Día borrado del historial");
 }
 
 /* ============================================================
-   PLAN DE LECTURA (recomendación diaria del programa sbr-S)
+   PLAN DE LECTURA
    ============================================================ */
 function empezarPlan(){
   var idx = +selLibro.value;
   if(estado.plan && estado.plan.libro === idx){
-    var g = PLAN_GRUPOS[idx];
-    if(estado.plan.completados >= g.length){
-      mostrarToast("Ya completaste " + LIBROS[idx][0] + " 🌿");
-    }else{
-      mostrarToast("Ya estás leyendo " + LIBROS[idx][0]);
-    }
+    sincronizarPlan();
+    if(estado.plan.completados >= PLAN_GRUPOS[idx].length) mostrarToast("Ya completaste " + LIBROS[idx][0] + " 🌿");
+    else mostrarToast("Ya estás leyendo " + LIBROS[idx][0]);
     return;
   }
   if(estado.plan){
@@ -1687,7 +1846,8 @@ function empezarPlan(){
     var ok = window.confirm("Estás leyendo " + actual + ". ¿Cambiar el plan a " + LIBROS[idx][0] + "?\n\nTu progreso registrado no se pierde; solo cambia la recomendación diaria.");
     if(!ok) return;
   }
-  estado.plan = { libro: idx, completados: 0, inicio: hoyClave() };
+  estado.plan = { libro:idx, completados:0, inicio:hoyClave() };
+  sincronizarPlan();
   guardar();
   pintarTodo();
   mostrarToast("Plan iniciado: " + LIBROS[idx][0] + " 🌿");
@@ -1696,24 +1856,27 @@ function empezarPlan(){
 function marcarPlanLeido(){
   var p = estado.plan;
   if(!p) return;
+  sincronizarPlan();
   var grupos = PLAN_GRUPOS[p.libro];
   if(p.completados >= grupos.length) return;
-  var etiqueta = grupos[p.completados];
-  var caps = capsDeGrupo(etiqueta);
-  var nombre = LIBROS[p.libro][0], totalLibro = LIBROS[p.libro][1];
-  var leidos = estado.libros[nombre] || 0;
-  var aplicables = Math.min(caps, totalLibro - leidos);
 
-  if(aplicables > 0){ estado.libros[nombre] = leidos + aplicables; }
-  sumarAlDia(hoyClave(), caps);
-  p.completados++;
+  var indiceGrupo = p.completados;
+  var etiqueta = grupos[indiceGrupo];
+  var lista = capitulosDelGrupo(etiqueta);
+  var yaEstaban = lista.filter(function(c){ return estaLeido(p.libro,c); });
+  var nuevos = registrarCapitulos(p.libro, lista, hoyClave());
   estado.ultimoLibro = p.libro;
-  guardar();
-  pintarTodo();
-  if(p.completados >= grupos.length){
+  actualizarDespuesDeCambio();
+
+  var nombre = LIBROS[p.libro][0];
+  if(estado.plan.completados >= grupos.length){
     mostrarToast("¡Terminaste " + nombre + "! 🌿");
+  }else if(nuevos.length === 0){
+    mostrarToast("Esta lectura ya estaba registrada. Se muestra la siguiente.");
+  }else if(yaEstaban.length > 0){
+    mostrarToast(yaEstaban.length + (yaEstaban.length===1?" capítulo ya estaba registrado; se añadió ":" capítulos ya estaban registrados; se añadieron ") + nuevos.length + (nuevos.length===1?" nuevo. Siguiente lectura lista.":" nuevos. Siguiente lectura lista."));
   }else{
-    mostrarToast(nombre + " " + etiqueta + " registrado ✓");
+    mostrarToast(descripcionCapitulos(p.libro,nuevos) + " registrado. Siguiente lectura lista.");
   }
 }
 
@@ -1757,7 +1920,7 @@ function pintarPlan(){
       resumenWrap.style.display = "block";
       detalle.textContent = "Grupo " + (p.completados+1) + " de " + grupos.length + " del programa · "
         + caps + (caps===1 ? " capítulo" : " capítulos")
-        + ". Al marcarlo como leído se registra automáticamente en tus estadísticas de hoy.";
+        + ". Al marcarlo como leído solo se añaden los capítulos nuevos y aparece inmediatamente la siguiente lectura, aunque quieras adelantarla hoy.";
       acciones.style.display = "flex";
     }
     barraWrap.style.display = "block";
@@ -1879,6 +2042,19 @@ function poblarSelect(){
   selLibro.value = estado.ultimoLibro;
 }
 
+function pintarRegistroPreview(){
+  var el = document.getElementById("registroPreview");
+  if(!el || !selLibro || !inpCaps) return;
+  var idx = +selLibro.value;
+  var cantidad = Math.max(1, parseInt(inpCaps.value,10) || 1);
+  var pendientes = capitulosPendientes(idx,cantidad);
+  if(!pendientes.length){
+    el.innerHTML = "<b>Libro completado:</b> no quedan capítulos pendientes en " + LIBROS[idx][0] + ".";
+  }else{
+    el.innerHTML = "<b>Se registrará:</b> " + descripcionCapitulos(idx,pendientes) + ". Los capítulos ya guardados nunca se repiten.";
+  }
+}
+
 function pintarLibro(){
   var idx = +selLibro.value;
   var nombre = LIBROS[idx][0], total = LIBROS[idx][1];
@@ -1887,6 +2063,7 @@ function pintarLibro(){
   document.getElementById("progLibroLbl").textContent = "Progreso de " + nombre;
   document.getElementById("progLibroNum").textContent = leidos + " / " + total;
   document.getElementById("progLibroBar").style.width = (leidos/total*100) + "%";
+  pintarRegistroPreview();
 }
 
 function pintarHero(){
@@ -2057,15 +2234,19 @@ function mostrarToast(msg){
    ============================================================ */
 document.getElementById("btnMas").addEventListener("click", function(){
   inpCaps.value = Math.max(1, (parseInt(inpCaps.value,10)||0) + 1);
+  pintarRegistroPreview();
 });
 document.getElementById("btnMenos").addEventListener("click", function(){
   inpCaps.value = Math.max(1, (parseInt(inpCaps.value,10)||2) - 1);
+  pintarRegistroPreview();
 });
 document.querySelectorAll(".chips button").forEach(function(b){
   b.addEventListener("click", function(){
     inpCaps.value = Math.max(1, (parseInt(inpCaps.value,10)||0) + parseInt(b.dataset.suma,10));
+    pintarRegistroPreview();
   });
 });
+inpCaps.addEventListener("input", pintarRegistroPreview);
 document.getElementById("btnRegistrar").addEventListener("click", registrar);
 document.getElementById("btnHoyMas").addEventListener("click", function(){ ajustarDia(hoyClave(), 1); });
 document.getElementById("btnHoyMenos").addEventListener("click", function(){ ajustarDia(hoyClave(), -1); });
@@ -2074,6 +2255,7 @@ selLibro.addEventListener("change", function(){
   guardar();
   pintarLibro();
   pintarPlan();
+  pintarRegistroPreview();
 });
 document.getElementById("btnPlan").addEventListener("click", empezarPlan);
 document.getElementById("btnPlanLeido").addEventListener("click", marcarPlanLeido);
