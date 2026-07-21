@@ -205,6 +205,28 @@
     font-size:13.5px; font-weight:400; line-height:1.5;
     color:var(--primary-fixed-dim);
   }
+  .plan .resumen-lectura{
+    margin-top:16px;
+    padding:16px 17px;
+    border-radius:16px;
+    background:rgba(255,255,255,.10);
+    border:1px solid rgba(197,236,210,.22);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.05);
+    text-align:left;
+  }
+  .plan .resumen-titulo{
+    display:flex; align-items:center; gap:7px;
+    font-size:10.5px; font-weight:700; letter-spacing:.13em;
+    text-transform:uppercase;
+    color:var(--primary-fixed);
+    margin-bottom:7px;
+  }
+  .plan .resumen-titulo svg{width:14px; height:14px; flex:none;}
+  .plan .resumen-texto{
+    margin:0;
+    font-size:14px; font-weight:400; line-height:1.58;
+    color:#eef8f1;
+  }
   .plan .acciones{margin-top:22px; display:flex; gap:12px; flex-wrap:wrap;}
   .btn-leido{
     font-family:var(--font-body);
@@ -626,6 +648,13 @@
       Lectura de hoy · Programa
     </div>
     <div class="lectura" id="planLectura">Elige un libro para empezar</div>
+    <div class="resumen-lectura" id="planResumenWrap" style="display:none" aria-live="polite">
+      <div class="resumen-titulo">
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4 3h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H8l-4 3V5a2 2 0 0 1 2-2zm3 5h10V6H7v2zm0 4h10v-2H7v2zm0 4h7v-2H7v2z"/></svg>
+        Resumen de la lectura
+      </div>
+      <p class="resumen-texto" id="planResumen"></p>
+    </div>
     <div class="detalle" id="planDetalle">Selecciona un libro abajo y toca «Empezar a leer» para recibir cada día el grupo de capítulos que recomienda el programa de lectura.</div>
     <div class="acciones" id="planAcciones" style="display:none">
       <button type="button" class="btn-leido" id="btnPlanLeido">
@@ -925,6 +954,513 @@ var PLAN_GRUPOS = [
   /* Apocalipsis */  ["1-4","5-9","10-14","15-18","19-22"]
 ];
 
+/* Resumen breve y específico de cada grupo diario, en el mismo orden que PLAN_GRUPOS.
+   Hay 370 resúmenes: uno por cada lectura del programa. */
+var PLAN_RESUMENES = [
+  [
+    "Jehová crea los cielos, la tierra y la vida. Adán y Eva desobedecen, pierden el Paraíso y reciben la promesa de una futura liberación del pecado.",
+    "Caín mata a Abel y la violencia aumenta entre los seres humanos. Jehová escoge a Noé, le manda construir el arca y comienza el Diluvio.",
+    "Las aguas del Diluvio bajan, Noé sale del arca y Jehová establece un pacto simbolizado por el arcoíris. Después se forman las naciones y se confunden las lenguas en Babel.",
+    "Abrán obedece el llamado de Jehová y viaja a Canaán. Se separa de Lot, lo rescata y recibe la confirmación de que su descendencia heredará la tierra.",
+    "Agar da a luz a Ismael. Jehová cambia los nombres de Abrán y Sarai, establece la circuncisión y promete el nacimiento de Isaac; Abrahán intercede por Sodoma.",
+    "Sodoma y Gomorra son destruidas, pero Lot es librado. Nace Isaac, Agar e Ismael son protegidos y Abrahán demuestra una fe extraordinaria al estar dispuesto a ofrecer a su hijo.",
+    "Sara muere y Abrahán compra un lugar de sepultura en Macpelá. Luego envía a su siervo a buscar una esposa adecuada para Isaac, y Rebeca acepta acompañarlo.",
+    "Muere Abrahán. Nacen Esaú y Jacob, Esaú vende su derecho de primogénito y Jacob recibe la bendición de Isaac, lo que provoca su huida.",
+    "Jacob ve en Betel una escalera que llega al cielo. Trabaja para Labán, se casa con Lea y Raquel, forma una familia numerosa y aumenta sus rebaños.",
+    "Jacob abandona en secreto la casa de Labán y ambos hacen un pacto de paz. Mientras regresa a Canaán, lucha durante la noche y recibe el nombre Israel.",
+    "Jacob y Esaú se reencuentran pacíficamente. Después, el ultraje cometido contra Dina provoca una venganza violenta de Simeón y Leví.",
+    "Jacob vuelve a Betel y reafirma su adoración a Jehová. Mueren Raquel e Isaac, y José despierta los celos de sus hermanos por sus sueños y es vendido como esclavo.",
+    "Judá y Tamar quedan vinculados a la línea familiar prometida. En Egipto, José resiste la inmoralidad, es encarcelado injustamente e interpreta los sueños de dos funcionarios.",
+    "José interpreta los sueños del faraón y es nombrado administrador de Egipto. Durante el hambre, sus hermanos llegan a comprar alimento sin reconocerlo.",
+    "Los hermanos regresan con Benjamín. José pone a prueba su actitud mediante la copa escondida y, al ver el cambio de Judá, revela finalmente quién es.",
+    "Jacob y toda su familia se trasladan a Egipto, donde José los instala en Gosén. Jacob adopta y bendice a Efraín y Manasés, dando prioridad profética al menor.",
+    "Jacob bendice a sus doce hijos y anuncia aspectos del futuro de sus tribus. Después de su muerte, José reafirma su perdón a sus hermanos y muere confiando en la promesa de Jehová."
+  ],
+  [
+    "Israel es oprimido en Egipto. Moisés nace, es protegido, huye a Madián y Jehová lo llama desde la zarza ardiente para liberar a su pueblo.",
+    "Moisés y Aarón comparecen ante el faraón, pero la esclavitud se intensifica. Jehová reafirma su nombre y su propósito, y prepara a sus siervos para actuar.",
+    "Comienzan las plagas sobre Egipto: el Nilo se convierte en sangre y llegan ranas, mosquitos, tábanos, peste, úlceras y granizo, mientras Jehová distingue a su pueblo.",
+    "Las langostas y la oscuridad completan las advertencias. Se instituye la Pascua y la muerte de los primogénitos obliga al faraón a dejar salir a Israel.",
+    "Jehová guía a Israel hasta el mar Rojo, abre las aguas y destruye al ejército egipcio. Moisés y el pueblo entonan un canto de victoria y alabanza.",
+    "En el desierto, Jehová endulza el agua, proporciona codornices, maná y agua de una roca. Israel aprende a depender diariamente de su cuidado.",
+    "Jetró aconseja a Moisés que delegue responsabilidades. En el monte Sinaí, Jehová prepara al pueblo para entrar en un pacto con él.",
+    "Se dan los Diez Mandamientos y otras leyes sobre justicia, esclavitud, daños, propiedad, adoración y fiestas. Israel acepta formalmente el pacto con Jehová.",
+    "Jehová da instrucciones detalladas para construir el tabernáculo, el arca, la mesa, el candelabro, los altares y el patio, todos destinados a la adoración pura.",
+    "Se describen las prendas del sumo sacerdote y la ceremonia de instalación de los sacerdotes. También se regula el sacrificio diario y la santidad del servicio.",
+    "Se dan instrucciones sobre el incienso, el aceite santo, el sábado y los artesanos. Mientras Moisés está en la montaña, el pueblo fabrica un becerro de oro.",
+    "Moisés intercede por Israel y Jehová renueva el pacto. Se recalca evitar la idolatría, y el rostro de Moisés refleja la gloria recibida al hablar con Dios.",
+    "El pueblo aporta generosamente los materiales y los artesanos fabrican el tabernáculo, sus cubiertas, muebles, altares, utensilios y el patio conforme al modelo recibido.",
+    "Se terminan las prendas sacerdotales y se monta el tabernáculo. La nube de Jehová lo llena y guía a Israel en todas sus etapas por el desierto."
+  ],
+  [
+    "Se explican las ofrendas quemadas, de grano, de paz y por el pecado. Cada sacrificio enseña respeto por la santidad de Jehová y la necesidad de expiación.",
+    "Se completan las normas sobre ofrendas por culpa y deberes sacerdotales. Se destaca que la adoración debe seguir exactamente las instrucciones de Jehová.",
+    "Aarón y sus hijos son instalados como sacerdotes. Jehová acepta el servicio, pero Nadab y Abihú mueren por presentar fuego no autorizado.",
+    "Se distinguen animales limpios e inmundos y se regulan la purificación después del parto y la identificación de enfermedades de la piel.",
+    "Se explican la inspección y purificación de la lepra, tanto en personas como en casas. El procedimiento protege la salud y la limpieza ceremonial del campamento.",
+    "Se regulan las impurezas corporales y se establece el Día de Expiación, cuando el sumo sacerdote entra en el Santísimo y se cubren los pecados de la nación.",
+    "Jehová prohíbe comer sangre y condena prácticas sexuales degradantes. Israel debe mantenerse moralmente limpio y diferente de las naciones vecinas.",
+    "Se presentan normas de santidad práctica: respeto a padres, honestidad, justicia, amor al prójimo y rechazo de la idolatría y el espiritismo.",
+    "Se exige santidad a los sacerdotes y se especifican condiciones para sus ofrendas. También se enumeran las fiestas anuales dedicadas a Jehová.",
+    "Se regula el aceite y el pan del santuario, y se castiga la blasfemia. El año sabático, el Jubileo y las bendiciones o consecuencias del pacto completan el libro."
+  ],
+  [
+    "Se realiza un censo de los hombres aptos para la guerra y se organiza el campamento alrededor del tabernáculo. Los levitas quedan apartados para el servicio sagrado.",
+    "Se asignan deberes a las familias levitas y se protege la limpieza del campamento. Se incluyen leyes sobre restitución, celos matrimoniales y el voto de nazareo.",
+    "Los jefes tribales presentan ofrendas para el altar. Se consagran los levitas y se vuelve a celebrar la Pascua bajo la guía de la nube de Jehová.",
+    "Las trompetas marcan la partida del Sinaí. El pueblo se queja, recibe codornices y sufre una plaga; Miriam y Aarón cuestionan a Moisés.",
+    "Doce espías reconocen Canaán, pero diez desaniman al pueblo. Israel se rebela y Jehová decreta que esa generación morirá en el desierto.",
+    "Se dan nuevas normas de adoración y ocurre la rebelión de Coré, Datán y Abiram. Jehová confirma la autoridad de Aarón mediante su vara florecida.",
+    "Se explican deberes y apoyos de sacerdotes y levitas. Miriam muere, Moisés falla en Meribá y Aarón muere en el monte Hor.",
+    "Israel vence a varios enemigos, y una serpiente de cobre permite sobrevivir a quienes obedecen. Balac contrata a Balaam, pero Jehová convierte las maldiciones en bendiciones.",
+    "Israel cae en inmoralidad e idolatría con Moab. Finehás actúa con celo, se realiza un segundo censo y Josué es nombrado sucesor de Moisés.",
+    "Se detallan las ofrendas diarias, semanales y festivas, así como normas sobre votos. Todo recuerda que la adoración requiere regularidad y responsabilidad.",
+    "Israel derrota a Madián y las tribus de Rubén, Gad y media Manasés reciben territorio al este del Jordán con la condición de ayudar en la conquista.",
+    "Se repasan las etapas del viaje, se fijan los límites de Canaán y las ciudades de refugio. Las herencias deben conservarse dentro de cada tribu."
+  ],
+  [
+    "Moisés repasa el viaje desde Horeb, el nombramiento de jueces y la rebelión tras el informe de los espías. La nueva generación aprende de los errores anteriores.",
+    "Se recuerdan las victorias sobre Sehón y Og y la distribución de sus tierras. Moisés ruega entrar en Canaán, pero prepara a Josué para dirigir al pueblo.",
+    "Moisés exhorta a no añadir ni quitar de la Ley, repite los Diez Mandamientos y recalca amar a Jehová con todo el corazón y enseñar sus palabras a los hijos.",
+    "Israel debe destruir la idolatría cananea y recordar que fue elegido por amor, no por superioridad. La obediencia traerá protección y prosperidad.",
+    "Moisés recuerda cómo Jehová alimentó y disciplinó al pueblo. Advierte contra el orgullo y repasa la rebelión del becerro de oro y su intercesión.",
+    "Se llama a amar y obedecer a Jehová, escoger su bendición y centralizar la adoración en el lugar que él elija. Se prohíben prácticas paganas.",
+    "Se establecen pruebas para detectar falsos profetas, normas sobre alimentos, diezmos, liberación de deudas, esclavos y las tres fiestas anuales.",
+    "Se ordena nombrar jueces justos y se regulan el rey, los sacerdotes y los profetas. Jehová promete levantar un profeta semejante a Moisés.",
+    "Se explican las ciudades de refugio, los testigos, la guerra, el homicidio no resuelto, la familia, la propiedad y diversas responsabilidades sociales.",
+    "Se dan normas sobre pureza del campamento, préstamos, salarios, protección del vulnerable, justicia, matrimonio por cuñado y medidas honestas.",
+    "Israel debe presentar las primicias y confirmar el pacto. En los montes Ebal y Guerizim se proclaman bendiciones por obedecer y graves consecuencias por rebelarse.",
+    "Moisés renueva el pacto, invita a escoger la vida y encarga públicamente a Josué. La Ley debe leerse regularmente ante todo el pueblo.",
+    "El canto de Moisés recuerda la fidelidad de Jehová y la infidelidad de Israel. Antes de morir, Moisés bendice a las tribus y contempla la Tierra Prometida."
+  ],
+  [
+    "Jehová confirma a Josué como sucesor de Moisés. Rahab protege a los espías, Israel cruza el Jordán en seco y levanta piedras conmemorativas.",
+    "El pueblo se circuncida y celebra la Pascua. Jericó cae por obediencia, pero el pecado de Acán provoca una derrota inicial en Hai.",
+    "Tras corregir el pecado, Israel conquista Hai y renueva el pacto en el monte Ebal. Los gabaonitas consiguen protección mediante un engaño.",
+    "Jehová ayuda a Israel contra una coalición de reyes; el sol parece detenerse durante la batalla. Después se completa una amplia campaña en el sur y el norte.",
+    "Se enumeran los reyes derrotados y comienza el reparto de Canaán. Caleb recibe Hebrón y Judá obtiene su herencia, con límites y ciudades detallados.",
+    "Efraín y Manasés reciben territorio, y se completa el reparto desde Siló para las tribus restantes. También se asigna a Josué su propia ciudad.",
+    "Se establecen ciudades de refugio y ciudades levitas. Las tribus orientales regresan y levantan un altar como testimonio de unidad, no de rebelión.",
+    "En sus discursos finales, Josué exhorta a permanecer leales a Jehová. En Siquem el pueblo renueva el pacto y declara que servirá únicamente a Dios."
+  ],
+  [
+    "Israel no expulsa por completo a los cananeos y queda expuesto a su influencia. Tras la muerte de Josué, se repite el ciclo de infidelidad, opresión y liberación.",
+    "Jehová levanta a Otniel, Ehúd, Débora y Barac. Sísara es derrotado, Jael lo mata y el cántico de Débora celebra la disposición voluntaria del pueblo.",
+    "Madián oprime a Israel. Jehová llama a Gedeón, reduce su ejército a 300 hombres y concede una victoria que demuestra que la salvación no depende de la fuerza humana.",
+    "Gedeón rechaza ser rey, pero su efod se vuelve una trampa. Su hijo Abimélec toma el poder violentamente y finalmente muere, mostrando el resultado de la ambición.",
+    "Tola y Jaír juzgan a Israel. Jefté es llamado para enfrentar a Amón, pronuncia un voto imprudente y obtiene la victoria, aunque surgen conflictos internos.",
+    "Después de varios jueces menores, nace Sansón conforme a una promesa angelical. Su fuerza extraordinaria comienza a utilizarse contra los filisteos.",
+    "Sansón realiza hazañas contra los filisteos, pero sus decisiones impulsivas le causan problemas. Dalila descubre el secreto de su nazareato y él es capturado.",
+    "Sansón recupera fuerzas y derriba el templo filisteo al morir. Luego se relata la idolatría de Miqueas y la migración violenta de la tribu de Dan.",
+    "El abuso y asesinato de una concubina desencadenan una guerra civil contra Benjamín. Israel evita la desaparición de la tribu, pero el relato muestra el caos de vivir sin dirección justa."
+  ],
+  [
+    "Rut demuestra amor leal al acompañar a Noemí a Belén. Booz la protege, actúa como recomprador y se casa con ella; su hijo Obed llega a ser antepasado del rey David."
+  ],
+  [
+    "Ana ora por un hijo y cumple su voto al dedicar a Samuel al servicio de Jehová. El niño recibe un mensaje de juicio contra la casa corrupta de Elí.",
+    "Los filisteos capturan el arca, pero sufren plagas y la devuelven. Samuel guía a Israel al arrepentimiento y Jehová les concede victoria en Mizpá.",
+    "Israel exige un rey. Saúl es escogido, ungido y reconocido públicamente; después rescata Jabés de Galaad y consolida su autoridad.",
+    "Samuel recuerda la fidelidad de Jehová y advierte al pueblo. Saúl actúa con impaciencia, y Jonatán demuestra fe al atacar una guarnición filistea.",
+    "Saúl desobedece al conservar lo que debía destruir de Amalec. Jehová lo rechaza como rey y Samuel recalca que obedecer vale más que ofrecer sacrificios.",
+    "David es ungido en secreto y entra al servicio de Saúl. Con fe en Jehová derrota a Goliat, mientras crecen su reputación y la amistad con Jonatán.",
+    "Saúl siente celos y trata de matar a David. David actúa con éxito, se casa con Mical y recibe la protección leal de Jonatán.",
+    "David huye y recibe ayuda de sacerdotes, pero Doeg provoca una matanza en Nob. David protege Queilá y sigue escapando de Saúl.",
+    "David perdona la vida de Saúl en una cueva y demuestra respeto por el ungido de Jehová. Abigail evita que David derrame sangre por venganza.",
+    "David vuelve a perdonar a Saúl, quien reconoce su error. Luego se refugia entre los filisteos y actúa con cautela para proteger a Israel.",
+    "Saúl consulta a una médium y recibe un mensaje de condena. David recupera a sus familias de los amalequitas, mientras Saúl y sus hijos mueren en batalla."
+  ],
+  [
+    "David lamenta la muerte de Saúl y Jonatán. Es ungido rey de Judá, mientras la casa de Saúl sostiene a Is-bóset y comienza una guerra prolongada.",
+    "La casa de David se fortalece; Abner e Is-bóset mueren y David castiga a los asesinos. Todas las tribus lo reconocen como rey, y él conquista Jerusalén y derrota a los filisteos.",
+    "David lleva el arca a Jerusalén, recibe la promesa de una dinastía duradera y obtiene victorias sobre naciones vecinas, administrando justicia y mostrando bondad a Mefibóset.",
+    "David comete adulterio con Bat-Seba y hace matar a Urías. Natán lo confronta, el hijo muere y comienzan dolorosas consecuencias dentro de su familia.",
+    "Amnón abusa de Tamar y Absalón lo mata. Tras años de exilio, Absalón regresa y empieza a ganar apoyo para rebelarse contra su padre.",
+    "Absalón se proclama rey y David abandona Jerusalén. Husai frustra el consejo de Ahitofel y ayuda a que David gane tiempo frente a los rebeldes.",
+    "El ejército de David vence y Absalón muere. El rey lamenta profundamente a su hijo, pero debe volver a animar a sus hombres y atender las necesidades del reino.",
+    "David regresa a Jerusalén, resuelve tensiones entre tribus y enfrenta la rebelión de Seba. Joab mata a Amasá y persigue al nuevo rebelde.",
+    "Se resuelve una culpa de sangre relacionada con Saúl y se narran nuevas guerras contra gigantes filisteos. David compone un canto que alaba a Jehová como libertador.",
+    "Las últimas palabras de David exaltan el gobierno justo y recuerdan a sus guerreros. Después, un censo indebido trae una plaga y David compra el lugar para un altar."
+  ],
+  [
+    "David envejece y Adonías intenta tomar el trono. Natán y Bat-Seba intervienen, Salomón es proclamado rey y David le da instrucciones finales antes de morir.",
+    "Salomón elimina amenazas al reino, pide sabiduría y demuestra discernimiento al resolver el caso de dos madres. Su administración y prosperidad se hacen famosas.",
+    "Salomón organiza la construcción del templo con la ayuda de Hiram. El edificio, sus cámaras y sus principales muebles se preparan con gran cuidado.",
+    "El arca es llevada al templo, la gloria de Jehová llena el lugar y Salomón pronuncia una extensa oración de dedicación por Israel y por extranjeros que busquen a Dios.",
+    "Jehová responde a Salomón y le advierte que permanezca fiel. La reina de Saba comprueba su sabiduría, y se describen la riqueza y el prestigio del reino.",
+    "Las esposas extranjeras desvían a Salomón hacia la idolatría. Jehová anuncia la división del reino; tras su muerte, la dureza de Rehoboam provoca la separación de diez tribus.",
+    "Jeroboán establece becerros de oro para controlar la adoración. Un profeta denuncia su altar, y la desobediencia de ese mensajero trae una seria lección.",
+    "La casa de Jeroboán es condenada. Se suceden reyes infieles en Israel y Judá, mientras la idolatría y la violencia aumentan hasta la llegada de Acab.",
+    "Elías anuncia una sequía, es alimentado milagrosamente y resucita al hijo de una viuda. En el monte Carmelo demuestra que Jehová, no Baal, es el Dios verdadero.",
+    "Elías huye desanimado, pero Jehová lo fortalece y le asigna nuevas tareas. Acab gana batallas contra Siria, aunque desobedece al dejar libre a Ben-Hadad.",
+    "Acab y Jezabel se apoderan de la viña de Nabot mediante asesinato. Elías anuncia juicio, y Acab muere en batalla después de rechazar la advertencia del profeta Micaya."
+  ],
+  [
+    "Ocozías recibe juicio por buscar a un dios falso. Elías es llevado en una tormenta, Eliseo inicia su servicio y ayuda a los reyes de Israel, Judá y Edom durante una campaña contra Moab.",
+    "Eliseo multiplica el aceite de una viuda, resucita al hijo de una sunamita y realiza otros milagros. Naamán es curado de lepra, mientras Guehazí es castigado por codicia.",
+    "Eliseo hace flotar un hacha y revela planes sirios. Samaria sufre un sitio, pero Jehová hace huir al enemigo; después la sunamita recupera su propiedad y Hazael llega al poder.",
+    "Jehú es ungido para ejecutar juicio. Mata a Joram, Ocozías y Jezabel, elimina la casa de Acab y destruye a los adoradores de Baal, aunque conserva los becerros de oro.",
+    "Atalía intenta destruir la línea real, pero Jehoás es protegido y coronado. Se repara el templo, y Eliseo muere después de anunciar victorias futuras sobre Siria.",
+    "Amasías y Jeroboán II gobiernan durante conflictos entre Judá e Israel. Luego una sucesión rápida y violenta de reyes debilita al reino del norte.",
+    "Acaz promueve idolatría en Judá y busca ayuda de Asiria. Israel cae ante los asirios por su persistente infidelidad, y otras poblaciones son instaladas en Samaria.",
+    "Ezequías confía en Jehová cuando Senaquerib invade. Isaías lo fortalece y un ángel destruye al ejército asirio, librando a Jerusalén.",
+    "Ezequías enferma y recibe más años de vida, pero muestra sus tesoros a Babilonia. Manasés y Amón practican idolatría; luego Josías encuentra el libro de la Ley e inicia reformas.",
+    "Josías elimina la idolatría y celebra una gran Pascua, pero muere en batalla. Los últimos reyes se rebelan, Babilonia destruye Jerusalén y el templo, y el pueblo va al exilio."
+  ],
+  [
+    "Las genealogías desde Adán hasta Israel conectan la historia del pueblo con sus antepasados y destacan la línea de Judá, de la que vendría la realeza.",
+    "Se registran descendientes de Judá, Simeón, Rubén, Gad y media tribu de Manasés. También se mencionan territorios, guerras y familias destacadas.",
+    "Las genealogías de Leví describen las familias sacerdotales y los cantores. Se añaden las líneas de Isacar, Benjamín, Neftalí, Manasés, Efraín y Aser.",
+    "Se enumeran familias que vivieron en Jerusalén y la genealogía de Saúl. Luego se relata su derrota y muerte por haber actuado infielmente.",
+    "David es reconocido como rey y conquista Jerusalén. Se mencionan sus poderosos guerreros y los grupos que se unieron a él durante su ascenso.",
+    "David intenta llevar el arca, pero Uzá muere por tocarla sin autorización. El episodio recalca que la adoración debe respetar el procedimiento indicado.",
+    "David establece su casa y derrota a los filisteos. Después organiza correctamente el traslado del arca con levitas, música y celebración.",
+    "El arca queda en Jerusalén y David compone un canto de agradecimiento. Jehová hace con él un pacto relacionado con una casa y una dinastía duraderas.",
+    "David obtiene victorias sobre naciones vecinas y organiza la administración. Se relata la guerra contra Amón y Siria, y nuevas derrotas de gigantes filisteos.",
+    "Satanás incita a David a realizar un censo indebido. Tras la plaga, David compra la era de Ornán y reconoce ese lugar como sitio para el futuro templo.",
+    "David prepara abundantes materiales para el templo y organiza a levitas, sacerdotes, músicos, porteros, tesoreros, funcionarios y ejército para el reinado de Salomón."
+  ],
+  [
+    "Salomón pide sabiduría y comienza la construcción del templo. Se describen su tamaño, materiales, muebles y los artesanos encargados de realizar la obra.",
+    "El templo queda terminado, el arca es instalada y la gloria de Jehová llena el edificio. Salomón pronuncia una extensa oración y el pueblo celebra la dedicación.",
+    "Jehová responde a Salomón con promesas condicionadas a la obediencia. Se describen sus obras, riqueza y sabiduría, incluida la visita de la reina de Saba.",
+    "La dureza de Rehoboam divide el reino. Judá sufre una invasión egipcia; Abías defiende la adoración verdadera y Asá comienza reformas y confía en Jehová ante un gran ejército.",
+    "Asá renueva el pacto, pero después confía en ayuda humana y termina mal. Jehosafat promueve la Ley, aunque se alía imprudentemente con Acab y casi muere.",
+    "Jehosafat reforma la justicia y, mediante oración, recibe una victoria sin combate. Después gobiernan los malvados Jehoram y Ocozías, y Atalía intenta eliminar la descendencia real.",
+    "Jehoiadá protege y corona a Jehoás, quien repara el templo pero luego abandona a Jehová. Amasías también comienza bien, aunque el orgullo lo conduce a una derrota.",
+    "Uzías prospera mientras busca a Jehová, pero el orgullo le causa lepra. Jotán actúa correctamente, mientras Acaz introduce idolatría extrema y busca ayuda de Asiria.",
+    "Ezequías limpia el templo, reorganiza el servicio y celebra una gran Pascua abierta incluso a personas del reino del norte. El pueblo elimina numerosos objetos idolátricos.",
+    "Ezequías organiza el apoyo a sacerdotes y levitas y confía en Jehová durante la invasión asiria. Manasés practica gran maldad, pero se arrepiente durante el cautiverio.",
+    "Josías encuentra la Ley, realiza reformas y celebra una Pascua sobresaliente. Tras su muerte, Judá vuelve a rebelarse, Jerusalén es destruida y el decreto de Ciro permite regresar."
+  ],
+  [
+    "Ciro autoriza el regreso de los judíos y la reconstrucción del templo. Se enumeran los repatriados, se restaura el altar y se colocan los cimientos entre alegría y llanto.",
+    "Los opositores detienen temporalmente la obra, pero los profetas Ageo y Zacarías animan a reanudarla. Darío confirma el decreto y el templo queda terminado y dedicado.",
+    "Esdras llega a Jerusalén con autorización real y valiosas contribuciones. Al conocer los matrimonios con pueblos idólatras, ora con dolor y dirige una corrección colectiva."
+  ],
+  [
+    "Nehemías recibe noticias de Jerusalén, ora y obtiene permiso para reconstruir las murallas. Inspecciona la ciudad de noche y organiza a las familias para comenzar la obra.",
+    "Los opositores ridiculizan y amenazan, pero el pueblo trabaja armado y vigilante. Nehemías también corrige abusos económicos entre los propios judíos.",
+    "Las murallas se terminan pese a conspiraciones y falsas acusaciones. Se registran familias y repatriados, y la ciudad queda mejor organizada.",
+    "Esdras lee la Ley públicamente, el pueblo celebra la Fiesta de las Cabañas y confiesa sus pecados, repasando la paciencia y fidelidad de Jehová.",
+    "El pueblo firma un compromiso de obediencia, se repuebla Jerusalén y se dedican las murallas con música. Nehemías corrige nuevas desviaciones relacionadas con el templo, el sábado y matrimonios."
+  ],
+  [
+    "La reina Vasti es destituida y Ester, una judía criada por Mardoqueo, llega a ser reina. Mardoqueo descubre un complot, mientras Hamán planea exterminar a todos los judíos.",
+    "Ester arriesga su vida ante el rey, expone a Hamán y obtiene protección para su pueblo. Los judíos se defienden, se instituye la fiesta de Purim y Mardoqueo recibe gran autoridad."
+  ],
+  [
+    "Satanás cuestiona la integridad de Job. Este pierde bienes, hijos y salud, pero no renuncia a Jehová; tres compañeros llegan y guardan silencio con él.",
+    "Job expresa su dolor, y Elifaz afirma erróneamente que el sufrimiento demuestra culpa. Job responde que necesita compasión y desea presentar su caso ante Dios.",
+    "Bildad y Zofar acusan a Job de maldad. Job defiende su inocencia relativa, reconoce la grandeza de Dios y anhela un mediador que permita expresar su angustia.",
+    "Elifaz vuelve a acusarlo y Job describe su profundo abandono. Bildad insiste en el destino del malvado, pero Job expresa confianza en que su causa será finalmente aclarada.",
+    "Zofar habla del breve triunfo del malvado, pero Job señala que muchos malvados prosperan. Esto pone en duda las explicaciones simplistas de sus compañeros.",
+    "Elifaz formula acusaciones concretas sin pruebas. Job desea encontrar a Dios para defenderse, mientras reafirma que Jehová conoce su conducta y que la injusticia humana abunda.",
+    "Bildad resalta la pequeñez humana. Job responde con una descripción majestuosa del poder de Dios y mantiene que no abandonará su integridad pese a las falsas acusaciones.",
+    "Job habla de la sabiduría, más valiosa que los tesoros, y recuerda su antigua vida honorable. Luego describe la humillación y el sufrimiento que ahora soporta.",
+    "Job concluye su defensa con una revisión de su conducta moral. Elihú, más joven, comienza a hablar porque considera incompletas tanto las palabras de Job como las de sus amigos.",
+    "Elihú explica que Dios puede disciplinar y enseñar sin cometer injusticia. Defiende la imparcialidad divina y exhorta a Job a reconocer los límites de su comprensión.",
+    "Jehová responde desde una tormenta con preguntas sobre la creación y los animales. Job reconoce su pequeñez, corrige su manera de hablar y recibe restauración y bendiciones."
+  ],
+  [
+    "Se contrasta al justo con el malvado, se anuncia el gobierno del Ungido y se presentan oraciones en medio de amenazas. También se alaba a Jehová por la creación y la dignidad concedida al ser humano.",
+    "Jehová aparece como Juez justo y refugio de los oprimidos. Los salmos denuncian la arrogancia, la corrupción y la falta de fe, mientras expresan confianza en su protección y guía.",
+    "El salmista pide que Jehová examine su corazón y lo libre de enemigos. Después celebra la poderosa liberación divina y explica que la creación y la Ley revelan la gloria y sabiduría de Dios.",
+    "Se ora por el rey y se celebra la victoria que Jehová le concede. El Salmo 22 anticipa sufrimiento y vindicación, el 23 presenta a Jehová como Pastor y los siguientes piden dirección, perdón y protección.",
+    "El salmista defiende su integridad, anhela estar en la casa de Jehová y confía en él durante el peligro. La voz divina se compara con una tormenta poderosa y se agradece la liberación.",
+    "Se destaca la felicidad de recibir perdón y la importancia de confesar los pecados. Jehová es alabado como Creador y Protector, y se pide defensa contra perseguidores injustos.",
+    "Se contrasta la maldad humana con el amor leal de Jehová. El salmista aconseja no irritarse por quienes hacen el mal y reconoce que la disciplina divina puede ser dolorosa.",
+    "La brevedad de la vida y el peso del sufrimiento llevan a pedir sabiduría y ayuda. Los salmos terminan expresando una intensa sed de Dios, como la de un ciervo por el agua.",
+    "El salmista busca luz y verdad en medio del desánimo. Se celebra a Jehová como Rey victorioso, se presenta una boda real con significado profético y se invita a las naciones a reconocer su soberanía.",
+    "Sion es presentada como la ciudad del gran Rey. Se advierte que las riquezas no pueden rescatar la vida, se pide ayuda ante el engaño y el Salmo 51 expresa arrepentimiento sincero.",
+    "Se denuncia la insensatez de negar a Dios y se ora durante traiciones y persecuciones. El salmista confía en que Jehová escucha y finalmente hará justicia a los malvados.",
+    "David pide protección de enemigos y traidores, y reconoce a Jehová como roca y refugio. En el desierto expresa sed espiritual y confianza en la defensa divina.",
+    "Jehová es alabado por escuchar oraciones, perdonar y dar abundantes cosechas. Se invita a toda la tierra a reconocer sus obras y se celebra su marcha victoriosa en favor de su pueblo.",
+    "El salmista soporta desprecio por su celo y pide ser rescatado. Luego ruega ayuda en la vejez y presenta un gobierno real justo que traerá paz y bendiciones a todas las naciones.",
+    "El aparente éxito de los malvados confunde al salmista hasta que comprende su final desde la perspectiva de Jehová. Otros salmos recuerdan la historia y buscan consuelo en sus actos poderosos.",
+    "Se repasa la continua rebeldía de Israel pese al cuidado divino. Jerusalén queda devastada y el pueblo pide perdón, compasión y restauración para no convertirse en objeto de burla.",
+    "Israel pide ser restaurado como una vid cuidada por Dios. Se exhorta a obedecer, se defiende al necesitado y varias oraciones solicitan protección, unidad de corazón y guía.",
+    "Sion es honrada como lugar de nacimiento espiritual de pueblos. Se clama desde profunda angustia, se recuerda el pacto con David y Moisés enseña a valorar la brevedad de la vida.",
+    "Se promete protección a quien se refugia en el Altísimo. Jehová es alabado por sus obras, su reinado y su superioridad sobre dioses falsos, y se invita a anunciar su salvación diariamente.",
+    "Se celebra que Jehová reina con justicia y santidad. Los salmos llaman a adorarlo con alegría, describen principios de gobierno íntegro y destacan su misericordia y compasión paternal.",
+    "La creación entera revela la sabiduría y cuidado de Jehová. Después se repasa cómo guio a Abrahán, José, Moisés e Israel, cumpliendo fielmente sus promesas.",
+    "Israel confiesa repetidas rebeliones desde Egipto hasta Canaán, mientras Jehová muestra paciencia. Los salmos siguientes agradecen su amor leal y expresan confianza en obtener victoria con su ayuda.",
+    "Una víctima de acusaciones falsas pide justicia. Jehová invita al Señor del salmista a gobernar, se celebran sus grandes obras y se recuerda la salida de Egipto y la inutilidad de los ídolos.",
+    "El salmista agradece haber sido salvado de la muerte y llama a todas las naciones a alabar. Se celebra la piedra rechazada y comienza una extensa meditación sobre amar y obedecer la palabra de Dios.",
+    "La segunda parte del Salmo 119 expresa amor constante por las leyes de Jehová. En medio de persecución y aflicción, el salmista pide entendimiento, disciplina, paz y ayuda para no desviarse.",
+    "Estos cantos de ascenso expresan deseo de paz, confianza en el Guardián de Israel y alegría por ir a Jerusalén. También destacan la misericordia, la unidad familiar y la bendición de trabajar con Jehová.",
+    "Desde lo profundo se pide perdón y se aprende a esperar en Jehová. Se recuerdan el pacto con David, la unidad entre hermanos y numerosas razones para agradecer el amor leal de Dios.",
+    "Jehová conoce por completo los pensamientos y caminos de cada persona. El salmista pide ser examinado, protegido de enemigos violentos y ayudado como rey y siervo dependiente.",
+    "Los últimos salmos son una gran conclusión de alabanza. Se celebra la grandeza, bondad, justicia y poder creador de Jehová, y se invita a todo ser que respira a alabarlo."
+  ],
+  [
+    "Se explica que el temor de Jehová es el comienzo del conocimiento. Un padre advierte contra malas compañías, inmoralidad y violencia, y presenta la sabiduría como protección y fuente de vida.",
+    "Se aconseja confiar en Jehová, aceptar la disciplina y buscar sabiduría como un tesoro. El lector debe proteger el corazón y evitar el camino seductor de la inmoralidad.",
+    "Se describen con franqueza las consecuencias del adulterio y la pereza. La sabiduría personificada invita a escucharla y declara que estuvo relacionada con las obras creadoras de Dios.",
+    "Comienzan numerosos proverbios breves que contrastan justicia e injusticia, diligencia y pereza, verdad y mentira. Las palabras, las decisiones y las amistades producen consecuencias previsibles.",
+    "Se destacan la humildad, el dominio propio, la prudencia y el valor del consejo. El orgullo y el habla dañina destruyen, mientras la conducta justa protege a la persona y a su familia.",
+    "Los proverbios tratan la educación de los hijos, la amistad, el control de la lengua y el uso de las riquezas. La sabiduría ayuda a evitar discusiones y decisiones apresuradas.",
+    "Se aconseja no envidiar a los pecadores, respetar límites y escuchar la disciplina. También aparecen dichos sobre la embriaguez, la parcialidad, el trabajo, la respuesta amable y la conducta ante un rey.",
+    "Se reúnen proverbios copiados por los hombres de Ezequías, palabras de Agur y consejos de una madre a un rey. El libro concluye describiendo a una esposa capaz, trabajadora y temerosa de Jehová."
+  ],
+  [
+    "El congregador analiza el trabajo, el placer, la sabiduría y las posesiones, y concluye que todo es vacío cuando se busca como fin en sí mismo. Hay un tiempo apropiado para cada actividad.",
+    "Se examinan la opresión, la competencia, la soledad, la riqueza y los votos. Se aconseja disfrutar con equilibrio los dones de Dios y reconocer los límites de la sabiduría humana.",
+    "La sabiduría es valiosa, pero no elimina la incertidumbre ni la muerte. El libro anima a actuar con diligencia, disfrutar responsablemente la juventud y temer a Dios obedeciendo sus mandamientos."
+  ],
+  [
+    "Una joven sulamita y un pastor expresan amor leal pese a la presión y los ofrecimientos del rey Salomón. El poema destaca la fidelidad, la pureza y un amor fuerte que no puede comprarse."
+  ],
+  [
+    "Judá es denunciada por rebelión, injusticia y adoración hipócrita. Jehová invita al arrepentimiento y presenta una visión futura en la que las naciones aprenden sus caminos y disfrutan paz.",
+    "La viña de Jehová produce malos frutos y se anuncian consecuencias. Isaías contempla la santidad divina, recibe su comisión y profetiza la señal de Emanuel.",
+    "Asiria será instrumento de disciplina, pero también recibirá castigo por su orgullo. Aun en tiempos oscuros se anuncia una gran luz y un resto que volverá a Jehová.",
+    "Un gobernante de la línea de Jesé traerá justicia y paz. Se celebrará la salvación, mientras Babilonia, Asiria y otras potencias orgullosas serán humilladas.",
+    "Mensajes contra Moab, Damasco, Etiopía y Egipto muestran que las naciones y sus dioses no ofrecen seguridad. Algunas personas finalmente reconocerán y adorarán a Jehová.",
+    "Isaías representa la caída de Egipto y Etiopía y anuncia juicios contra Babilonia, Edom, Arabia, Jerusalén y Tiro. El juicio alcanza la tierra, pero Jehová prepara salvación para su pueblo.",
+    "Jehová elimina la muerte, protege su viña y ofrece paz a quienes confían en él. Efraín y Jerusalén son corregidas por dirigentes irresponsables y por buscar refugios falsos.",
+    "Jerusalén es comparada con Ariel y se denuncia una adoración formal. Judá busca ayuda de Egipto, pero Jehová promete guía, protección y la llegada de un gobierno justo.",
+    "Bajo un Rey justo habrá seguridad, aunque antes vendrá juicio. Las naciones son llamadas a escuchar, Edom es castigada y Sion florecerá como un desierto convertido en jardín.",
+    "Senaquerib invade Judá y desafía a Jehová. Ezequías ora, Isaías transmite una respuesta y un ángel destruye al ejército asirio, librando a Jerusalén.",
+    "Ezequías enferma y recibe más años de vida, pero muestra imprudentemente sus tesoros a Babilonia. Isaías anuncia consuelo y presenta a Jehová como incomparable Creador y Pastor.",
+    "Jehová sostiene a su siervo y demuestra que los ídolos son inútiles. Israel no debe temer, pues Dios lo ayuda, lo redime y abre caminos donde parecen imposibles.",
+    "Jehová ridiculiza la fabricación de ídolos y señala a Ciro como instrumento de liberación. Babilonia será humillada por su crueldad, orgullo y ocultismo.",
+    "Jehová invita a Israel a escuchar y salir de Babilonia. Su siervo tiene una misión para Israel y las naciones, mientras Sion recibe promesas de consuelo y restauración.",
+    "Sion es llamada a despertar y se presentan buenas noticias de salvación. El siervo sufriente carga con pecados ajenos, es vindicado y se invita gratuitamente a buscar a Jehová.",
+    "Extranjeros fieles pueden acercarse a la adoración. Se denuncian dirigentes irresponsables e idolatría, y se explica que la adoración verdadera incluye humildad, justicia y generosidad.",
+    "El pecado separa al pueblo de Dios, pero se promete un Redentor. Sion recibe luz y honor, y el siervo ungido anuncia buenas noticias, libertad y consuelo.",
+    "Sion recibe un nuevo nombre y Jehová actúa como Salvador y Juez. Isaías recuerda su amor leal, confiesa el pecado del pueblo y anuncia nuevos cielos, nueva tierra y paz duradera."
+  ],
+  [
+    "Jeremías es llamado desde joven para profetizar. Jehová denuncia que Judá abandonó la fuente de agua viva y siguió ídolos, aunque todavía la invita a regresar.",
+    "Judá debe arrepentirse de corazón. Jeremías observa corrupción generalizada y advierte que un enemigo del norte se acerca por la persistente infidelidad del pueblo.",
+    "El pueblo confía falsamente en el templo mientras roba, oprime y adora ídolos. Jeremías anuncia que el santuario no protegerá a quienes rechazan la obediencia.",
+    "Jeremías lamenta el daño de su pueblo. Jehová contrasta al Dios vivo con los ídolos inútiles y expone que Judá ha roto el pacto.",
+    "Jeremías enfrenta un complot y pregunta por el éxito de los malvados. Ilustraciones como un cinturón arruinado muestran el orgullo y deterioro espiritual de Judá.",
+    "Una sequía revela la gravedad del pecado y los falsos profetas engañan con promesas de paz. Jeremías no debe formar una familia porque se aproxima una calamidad extraordinaria.",
+    "Se contrasta el corazón engañoso con la confianza en Jehová. El alfarero muestra el derecho de Dios a moldear naciones; Jeremías rompe una vasija y expresa su dolor por la oposición.",
+    "Jeremías anuncia juicio contra reyes y falsos pastores, pero promete un futuro Rey justo de la línea de David que gobernará con sabiduría.",
+    "Dos canastas de higos representan a exiliados que serán restaurados y a rebeldes que sufrirán. Se anuncian 70 años de dominio babilonio y juicio contra las naciones.",
+    "Jeremías casi es ejecutado por hablar contra el templo. Luego lleva un yugo para mostrar que someterse a Babilonia evitaría mayor destrucción, y corrige al falso profeta Hananías.",
+    "Jeremías escribe a los exiliados para que se establezcan y esperen el tiempo fijado. Jehová promete restaurar Israel y Judá y establecer un nuevo pacto escrito en el corazón.",
+    "Durante el sitio, Jeremías compra un campo como señal de que la tierra volverá a ocuparse. Jehová promete perdón, seguridad y continuidad para la línea de David.",
+    "El pueblo incumple un pacto para liberar esclavos, mientras los recabitas destacan por obediencia. Baruc escribe las profecías, pero el rey quema el rollo y recibe juicio.",
+    "Jeremías es acusado de traición, encarcelado y arrojado a una cisterna. Jerusalén cae, Sedequías es capturado y Jehová protege a Jeremías y a Ébed-mélec.",
+    "Gedalías gobierna a los sobrevivientes, pero Ismael lo asesina. El pueblo pide dirección, aunque decide huir a Egipto en contra de la respuesta de Jehová.",
+    "En Egipto, los refugiados continúan con la idolatría y rechazan las advertencias. Jeremías anuncia consecuencias por su obstinación.",
+    "Jeremías anima a Baruc y pronuncia mensajes contra Egipto, Filistea, Moab, Amón, Edom, Damasco, Quedar, Hazor y Elam.",
+    "Babilonia, aunque fue instrumento de juicio, también caerá por su orgullo y crueldad. Israel será perdonado, reunido y liberado de su opresor.",
+    "Se relata la caída de Jerusalén, la destrucción del templo y el exilio. El libro termina con la liberación de Joaquín de la prisión en Babilonia."
+  ],
+  [
+    "Jerusalén, antes llena de gente, aparece como una viuda devastada. El poeta reconoce que el desastre vino por la rebelión y describe el dolor, la soledad y el hambre.",
+    "En medio del sufrimiento, el escritor recuerda que el amor leal de Jehová no se acaba y espera en él. Luego lamenta la ruina de Sion y pide restauración y alivio."
+  ],
+  [
+    "Ezequiel contempla la gloria de Jehová y recibe su comisión como vigilante. Debe transmitir el mensaje aunque el pueblo sea rebelde y se niegue a escuchar.",
+    "Mediante acciones simbólicas, Ezequiel representa el sitio, el hambre y la dispersión de Jerusalén. La idolatría ha contaminado la tierra y traerá juicio.",
+    "Se acerca el fin para Judá: ni riqueza ni fuerza podrán salvar. En visión, Ezequiel observa prácticas idolátricas dentro del templo y la corrupción de la ciudad.",
+    "La gloria de Jehová comienza a retirarse del templo. Ezequiel representa la salida al exilio, corrige falsas expectativas y denuncia a profetas que prometen paz inexistente.",
+    "Jehová condena a ancianos idólatras y explica la responsabilidad personal. Jerusalén es comparada con una vid inútil y se anuncia que ni la reputación de hombres justos salvará a los rebeldes.",
+    "Jerusalén es presentada como una esposa infiel que abandonó a quien la cuidó. Su idolatría y alianzas políticas se describen como prostitución espiritual.",
+    "La ilustración de dos águilas condena la traición política. Jehová aclara que cada persona responde por sus actos y puede vivir si abandona el pecado.",
+    "Una lamentación describe la caída de los príncipes. Se repasan las rebeliones de Israel y Ezequiel anuncia la espada de Babilonia contra Jerusalén.",
+    "Se enumeran asesinatos, inmoralidad, sobornos y corrupción en Jerusalén. Samaria y Jerusalén son comparadas con dos hermanas infieles que buscan alianzas paganas.",
+    "La olla hirviendo representa el sitio y la muerte de la esposa de Ezequiel se convierte en señal. Se anuncian juicios contra Amón, Moab, Edom, Filistea y Tiro.",
+    "Tiro, orgullosa de su comercio y seguridad, será derribada. Se lamenta la caída de su gobernante y también se condena a Sidón.",
+    "Egipto y el faraón son comparados con un monstruo y un gran árbol destinado a caer. Babilonia recibirá Egipto como compensación por su campaña contra Tiro.",
+    "El faraón desciende simbólicamente junto con otras naciones poderosas. Ezequiel vuelve a ser nombrado vigilante y recalca que cada persona debe responder a la advertencia.",
+    "Los dirigentes egoístas son condenados como malos pastores. Jehová promete un pastor de la línea de David, juzga a Edom y anuncia limpieza, un corazón nuevo y restauración para Israel.",
+    "El valle de huesos secos representa la restauración nacional y dos palos unidos simbolizan un solo pueblo. Gog comienza su ataque contra la nación restaurada.",
+    "Jehová derrota por completo a Gog y santifica su nombre ante las naciones. Después Ezequiel contempla el comienzo de un nuevo templo cuidadosamente medido.",
+    "La visión continúa con la medición del templo, sus patios y cámaras. La gloria de Jehová regresa, y se describen el altar y su inauguración.",
+    "Se establecen normas para sacerdotes, terrenos sagrados y el principal. La organización busca proteger la santidad y evitar abusos de autoridad.",
+    "Se regulan ofrendas y fiestas. Un río que sale del templo produce vida, la tierra se distribuye entre las tribus y la ciudad recibe un nombre que afirma la presencia de Jehová."
+  ],
+  [
+    "Daniel y sus compañeros permanecen fieles en Babilonia y reciben sabiduría. Daniel interpreta el sueño de una enorme estatua que representa potencias humanas reemplazadas finalmente por el Reino de Dios.",
+    "Los tres hebreos rehúsan adorar una imagen y son librados del horno. Nabucodonosor aprende mediante un sueño y una humillación que el Altísimo gobierna sobre los reinos humanos.",
+    "Belsasar ve la escritura en la pared y Babilonia cae esa misma noche. Daniel sobrevive al foso de los leones, y después contempla cuatro bestias y al Hijo del Hombre recibiendo autoridad.",
+    "Daniel ve un carnero, un macho cabrío y un cuerno desafiante, símbolos de potencias futuras. Luego ora por el pecado de su pueblo y recibe la profecía de las setenta semanas.",
+    "Un mensajero fortalece a Daniel y explica una prolongada lucha entre reyes del norte y del sur. El libro termina con resurrección, juicio y la promesa de que Daniel recibirá su porción."
+  ],
+  [
+    "El matrimonio de Oseas ilustra la infidelidad de Israel y el amor persistente de Jehová. Los nombres de sus hijos anuncian juicio, pero también una futura restauración y reconciliación.",
+    "Israel es denunciado por idolatría, corrupción y alianzas políticas. Jehová recuerda su cuidado paternal, invita al arrepentimiento y promete sanar la infidelidad de quienes regresen a él."
+  ],
+  [
+    "Una plaga de langostas anuncia un día de juicio y llama al arrepentimiento sincero. Jehová promete restauración, derramar su espíritu sobre toda clase de personas y juzgar a las naciones."
+  ],
+  [
+    "Jehová juzga a las naciones vecinas y a Israel por violencia, inmoralidad, opresión y adoración hipócrita. Amós recuerda que el privilegio espiritual aumenta la responsabilidad.",
+    "Mediante visiones, Amós anuncia que el fin del reino del norte se acerca. Amasías intenta silenciarlo, pero el profeta mantiene el mensaje y concluye con una promesa de restauración."
+  ],
+  [
+    "Edom es condenado por orgullo, violencia y satisfacción ante la desgracia de Judá. Jehová promete que la casa de Jacob recuperará su herencia y que el reino le pertenecerá a él."
+  ],
+  [
+    "Jonás huye de su asignación, es tragado por un gran pez y aprende a obedecer. Nínive se arrepiente, y Jehová enseña al profeta a valorar la misericordia y la vida humana."
+  ],
+  [
+    "Samaria y Jerusalén son juzgadas por idolatría, corrupción y explotación. Se anuncia un gobernante procedente de Belén, se pide practicar justicia, amar la lealtad y andar modestamente con Dios, y se promete restauración."
+  ],
+  [
+    "Nínive, capital de Asiria, será destruida por su crueldad y arrogancia. Jehová es paciente, pero también justo, y la caída del opresor trae alivio a quienes sufrieron bajo su dominio."
+  ],
+  [
+    "El profeta pregunta por qué Jehová tolera la violencia y luego cómo puede usar a Babilonia. Aprende que el justo vive por fe y termina expresando alegría y confianza aunque falten los recursos materiales."
+  ],
+  [
+    "El día de Jehová traerá juicio contra Judá y las naciones por idolatría y orgullo. Se invita a buscar mansedumbre, y se promete que un resto limpio servirá unido y se alegrará bajo el cuidado divino."
+  ],
+  [
+    "Ageo corrige al pueblo por atender sus propias casas mientras el templo sigue en ruinas. Las personas responden, reanudan la obra y reciben promesas de apoyo y bendición de Jehová."
+  ],
+  [
+    "Una serie de visiones anima a los repatriados: Jehová protegerá Jerusalén, limpiará al sumo sacerdote y completará el templo mediante su espíritu, no por fuerza humana.",
+    "Se pregunta sobre ayunos y Jehová exige justicia, misericordia y verdad. Jerusalén será una ciudad segura, y un rey humilde llegará montado en un burro para traer paz.",
+    "Se anuncian un pastor rechazado, treinta monedas y un pueblo refinado. Jerusalén afrontará un ataque final, pero Jehová intervendrá y será reconocido como Rey sobre toda la tierra."
+  ],
+  [
+    "Jehová reprende a sacerdotes y pueblo por ofrendas defectuosas, matrimonios desleales y falta de respeto. Promete un mensajero preparatorio, distingue a quienes le temen y anuncia el gran día de juicio."
+  ],
+  [
+    "La genealogía conecta a Jesús con Abrahán y David. Se relatan su nacimiento, la visita de astrólogos, la huida a Egipto y el ministerio de Juan el Bautista antes del bautismo de Jesús.",
+    "Jesús vence las tentaciones del Diablo y comienza a predicar el Reino. En el Sermón del Monte enseña sobre felicidad, amor, oración, moralidad, confianza y la verdadera justicia.",
+    "Jesús concluye el Sermón del Monte y demuestra autoridad mediante curaciones, expulsión de demonios y control de una tormenta. También llama a Mateo y destaca la necesidad de misericordia.",
+    "Jesús envía a los doce apóstoles con instrucciones para predicar y afrontar oposición. Luego responde a las dudas de Juan, denuncia ciudades indiferentes e invita a los cansados a acudir a él.",
+    "Jesús explica el propósito del sábado, responde a acusaciones y enseña mediante parábolas sobre el Reino. La del sembrador muestra distintas respuestas al mensaje.",
+    "Juan el Bautista es ejecutado. Jesús alimenta multitudes, camina sobre el agua, denuncia tradiciones humanas y atiende con compasión a personas de diferentes regiones.",
+    "Pedro identifica a Jesús como el Cristo. Jesús anuncia su muerte, se transfigura ante tres discípulos y enseña sobre humildad, perdón y cuidado de los pequeños.",
+    "Jesús habla del matrimonio, bendice a niños y corrige el apego a las riquezas. Entra en Jerusalén, limpia el templo y denuncia a dirigentes que rechazan la autoridad divina.",
+    "Jesús responde preguntas difíciles, resume la Ley en amor a Dios y al prójimo y condena la hipocresía religiosa. Luego anuncia la destrucción del templo y señales de su presencia.",
+    "Jesús enseña a mantenerse vigilantes mediante parábolas, celebra la última Pascua, instituye la Cena del Señor, es arrestado, ejecutado y resucitado, y encarga hacer discípulos."
+  ],
+  [
+    "Juan prepara el camino y Jesús comienza su ministerio con autoridad. Sana enfermos, expulsa demonios, perdona pecados y escoge apóstoles, mientras aumenta la oposición religiosa.",
+    "Jesús enseña con parábolas, calma una tormenta y libera a un hombre dominado por demonios. También cura a una mujer y resucita a la hija de Jairo.",
+    "Jesús es rechazado en Nazaret, envía a los doce y alimenta a 5 000. Camina sobre el agua, corrige tradiciones humanas y realiza más curaciones entre judíos y no judíos.",
+    "Pedro reconoce a Jesús como el Cristo. Jesús anuncia su sufrimiento, se transfigura, libera a un muchacho y enseña sobre humildad, matrimonio, riquezas y servicio.",
+    "Jesús entra en Jerusalén, limpia el templo y responde a dirigentes hostiles. Enseña sobre fe, autoridad, impuestos, resurrección, amor y el peligro de la hipocresía.",
+    "Jesús anuncia acontecimientos futuros, celebra la última Pascua y es arrestado. Después de su juicio y ejecución, resucita y sus discípulos reciben la comisión de predicar."
+  ],
+  [
+    "Se anuncian los nacimientos de Juan y Jesús. María alaba a Dios, Jesús nace en Belén y es presentado en el templo, donde Simeón y Ana reconocen su importancia.",
+    "Juan el Bautista prepara al pueblo, Jesús se bautiza y se registra su genealogía. Luego vence las tentaciones y comienza a enseñar y sanar con poder.",
+    "Jesús llama discípulos, realiza pesca milagrosa, cura enfermos y enseña sobre perdón y sábado. Escoge a los doce y pronuncia enseñanzas sobre amor, generosidad y juicio.",
+    "Jesús cura al siervo de un oficial, resucita al hijo de una viuda y responde a Juan. Enseña con parábolas, calma una tormenta y libera a un hombre de demonios.",
+    "Jesús sana, resucita a la hija de Jairo, envía a los doce y alimenta a 5 000. Pedro lo identifica como el Cristo y Jesús se transfigura.",
+    "Jesús envía a 70 discípulos, cuenta la parábola del buen samaritano y enseña sobre oración. También denuncia la hipocresía y anima a confiar en el cuidado de Dios.",
+    "Jesús llama al arrepentimiento, cura en sábado y explica el costo del discipulado. Mediante las parábolas de la oveja, moneda e hijo perdidos muestra la alegría por recuperar al pecador.",
+    "Jesús habla del uso fiel de las riquezas, del perdón y de la fe. Cura a diez leprosos y enseña sobre el Reino, la oración perseverante, la humildad y las riquezas.",
+    "Jesús visita a Zaqueo, entra en Jerusalén y enseña en el templo. Responde sobre autoridad, impuestos y resurrección, y elogia la pequeña contribución de una viuda.",
+    "Jesús anuncia la caída de Jerusalén, celebra la Cena del Señor y es arrestado. Tras su ejecución resucita, explica las Escrituras a sus discípulos y asciende al cielo."
+  ],
+  [
+    "La Palabra existía antes de venir como ser humano y revela a Dios. Juan el Bautista identifica a Jesús, quien llama a sus primeros discípulos y realiza su primera señal en Caná.",
+    "Jesús limpia el templo, explica a Nicodemo el nuevo nacimiento y habla con una mujer samaritana sobre adoración verdadera. Muchos creen por su enseñanza y señales.",
+    "Jesús cura en sábado y explica que el Padre le ha dado autoridad para dar vida y juzgar. Luego alimenta a una multitud y se presenta como el pan de vida.",
+    "Jesús asiste a la Fiesta de las Cabañas y enseña públicamente pese a la oposición. Ofrece agua de vida y defiende su origen y misión frente a quienes intentan desacreditarlo.",
+    "Jesús da vista a un hombre ciego de nacimiento y expone la ceguera espiritual de sus opositores. Se presenta como el buen pastor que conoce y protege a sus ovejas.",
+    "Jesús resucita a Lázaro, aumentando la fe y también la conspiración contra él. Entra en Jerusalén y explica que su muerte atraerá a personas de toda clase.",
+    "Durante la última cena, Jesús lava los pies de sus discípulos y les enseña amor humilde. Promete el ayudante, se compara con la vid y prepara a sus seguidores para la oposición.",
+    "Jesús ora por sus discípulos, es arrestado y ejecutado. Después resucita, se aparece a sus seguidores y confirma a Pedro la responsabilidad de cuidar a sus ovejas."
+  ],
+  [
+    "Jesús resucitado instruye a los discípulos y asciende. En Pentecostés se derrama espíritu santo, Pedro predica y miles aceptan el mensaje, formando una congregación unida.",
+    "Pedro y Juan curan a un hombre y dan testimonio ante el Sanedrín. Los discípulos oran por valor, Ananías y Safira mueren por mentir y se nombran hombres para atender necesidades.",
+    "Esteban defiende la fe y muere apedreado, iniciándose una persecución. Felipe predica en Samaria y bautiza a un funcionario etíope que desea entender las Escrituras.",
+    "Saulo se convierte y comienza a predicar. Pedro realiza curaciones y, tras una visión, lleva el mensaje al gentil Cornelio; la congregación acepta que Dios también recibe a las naciones.",
+    "Herodes mata a Santiago y encarcela a Pedro, pero un ángel lo libera. Bernabé y Saulo son enviados como misioneros y forman congregaciones pese a fuerte oposición.",
+    "La reunión de Jerusalén decide que los gentiles no necesitan circuncidarse. Pablo inicia otro viaje, conoce a Timoteo y, en Filipos, Lidia y un carcelero aceptan el mensaje.",
+    "Pablo predica en Tesalónica, Berea, Atenas, Corinto y Éfeso. En Atenas habla del Dios desconocido, y en Éfeso el abandono de la magia y la idolatría provoca oposición económica.",
+    "Pablo fortalece congregaciones, se despide emotivamente de los ancianos de Éfeso y viaja a Jerusalén, aunque sabe que allí lo esperan cadenas y dificultades.",
+    "Pablo es arrestado en Jerusalén y defiende su fe ante la multitud y el Sanedrín. Un complot para matarlo lleva a su traslado protegido a Cesarea.",
+    "Pablo comparece ante Félix, Festo y el rey Agripa. Explica su conversión y misión, y apela a César para que su caso sea oído en Roma.",
+    "Durante el viaje a Roma, Pablo y los demás sobreviven a un naufragio. Finalmente llega a la capital y predica las buenas noticias con libertad relativa."
+  ],
+  [
+    "Pablo explica que tanto judíos como gentiles están bajo pecado y necesitan la justicia que Dios concede por fe. Abrahán sirve como ejemplo de fe anterior a la Ley.",
+    "La justificación trae paz con Dios y esperanza. Pablo contrasta a Adán con Cristo, explica el bautismo en la muerte de Jesús y describe la lucha contra el pecado.",
+    "No hay condenación para quienes están unidos a Cristo y siguen el espíritu. Pablo analiza el propósito de Dios respecto a Israel y destaca su soberanía, paciencia y misericordia.",
+    "Pablo exhorta a ofrecer la vida al servicio de Dios, mostrar amor sincero, respetar autoridades y no juzgar asuntos de conciencia. Concluye con planes, saludos y advertencias."
+  ],
+  [
+    "Pablo corrige divisiones, orgullo y dependencia de sabiduría humana. Explica que Dios hace crecer la congregación y que los responsables son administradores que deben ser fieles.",
+    "Se atiende un caso grave de inmoralidad, pleitos entre hermanos y preguntas sobre matrimonio y soltería. La libertad cristiana debe usarse con amor y conciencia.",
+    "Pablo renuncia a derechos para no obstaculizar las buenas noticias. Advierte con ejemplos de Israel, regula la Cena del Señor y explica la autoridad y el respeto en la congregación.",
+    "Los dones espirituales deben servir al bien común y el amor es superior a todos. Se regula el uso ordenado de los dones en reuniones y se defiende la resurrección de los muertos."
+  ],
+  [
+    "Pablo habla del consuelo que Dios da en las pruebas, explica cambios en sus planes y anima a perdonar al pecador arrepentido. Los cristianos son cartas vivas y ministros de un nuevo pacto.",
+    "El ministerio se compara con un tesoro en vasos de barro. Pablo habla de la esperanza futura, la reconciliación con Dios y la necesidad de mantenerse separados de prácticas contaminantes.",
+    "La tristeza piadosa produce arrepentimiento. Pablo organiza ayuda para creyentes necesitados y defiende su apostolado, mencionando sufrimientos, visiones y la fuerza que recibe pese a su debilidad."
+  ],
+  [
+    "Pablo defiende el origen divino de las buenas noticias y enseña que la persona es declarada justa por fe, no por obras de la Ley. La libertad cristiana produce fruto del espíritu, no conducta carnal."
+  ],
+  [
+    "Dios reúne todas las cosas mediante Cristo y forma una congregación unida de judíos y gentiles. Pablo exhorta a conservar la unidad, adoptar la nueva personalidad y usar la armadura espiritual."
+  ],
+  [
+    "Pablo escribe con alegría desde prisión, agradece el apoyo recibido y anima a mantener unidad y humildad siguiendo el ejemplo de Cristo. Recomienda regocijarse, orar y concentrarse en cosas sanas."
+  ],
+  [
+    "Cristo ocupa una posición central en el propósito de Dios y en la congregación. Pablo advierte contra filosofías y reglas humanas, y anima a vestirse de amor, paz y la nueva personalidad."
+  ],
+  [
+    "Pablo elogia la fe y aguante de la congregación, recuerda su ministerio afectuoso y aclara la esperanza para los cristianos que han muerto. Exhorta a mantenerse despiertos, limpios y animarse mutuamente."
+  ],
+  [
+    "Pablo fortalece a quienes sufren y corrige ideas de que el día de Jehová ya llegó. Advierte sobre el hombre del desafuero y manda evitar la ociosidad y trabajar de manera responsable."
+  ],
+  [
+    "Pablo instruye a Timoteo sobre enseñanza sana, oración, conducta, requisitos para ancianos y siervos ministeriales, atención a viudas y peligros del amor al dinero. Debe ser ejemplo para la congregación."
+  ],
+  [
+    "Desde prisión, Pablo anima a Timoteo a avivar su don, soportar dificultades y manejar correctamente la palabra de verdad. Advierte sobre tiempos críticos y termina expresando confianza al acercarse su muerte."
+  ],
+  [
+    "Tito debe nombrar ancianos capacitados, silenciar enseñanzas dañinas y promover conducta sana entre todas las edades. La bondad inmerecida de Dios impulsa a rechazar la impiedad y realizar buenas obras."
+  ],
+  [
+    "Pablo intercede con tacto por Onésimo, esclavo que se ha hecho cristiano. Pide a Filemón que lo reciba no solo como siervo, sino como hermano querido, mostrando perdón y amor práctico."
+  ],
+  [
+    "Dios ha hablado mediante su Hijo, superior a ángeles y a Moisés. Se advierte contra alejarse y se explica que Jesús es un sumo sacerdote compasivo según la manera de Melquisedec.",
+    "El sacerdocio de Jesús supera al levítico y media un pacto mejor. El tabernáculo y los sacrificios eran sombras; la sangre de Cristo ofrece una limpieza y acceso duraderos.",
+    "La fe permite aguantar y se ilustra con numerosos siervos antiguos. Los cristianos deben correr con perseverancia, aceptar disciplina, mostrar amor y mantener la mirada en Jesús."
+  ],
+  [
+    "Santiago enseña a afrontar pruebas con fe, pedir sabiduría, controlar la lengua y demostrar la fe mediante obras. Condena la parcialidad, el materialismo y las disputas, y anima a orar con perseverancia."
+  ],
+  [
+    "Los cristianos tienen una esperanza viva y deben mantenerse santos durante pruebas. Pedro los anima a ser ciudadanos respetuosos, esposos considerados, congregaciones amorosas y siervos humildes que resisten al Diablo."
+  ],
+  [
+    "Pedro exhorta a desarrollar cualidades espirituales y recordar la palabra profética. Advierte sobre falsos maestros y asegura que el día de Jehová llegará, por lo que debe mantenerse una conducta santa."
+  ],
+  [
+    "Juan explica que Dios es luz y amor. La obediencia, el amor a los hermanos y la fe en Jesús distinguen a los verdaderos hijos de Dios, mientras se advierte contra anticristos y enseñanzas falsas."
+  ],
+  [
+    "Juan elogia a quienes andan en la verdad y recalca el mandamiento de amarse. Advierte que no se apoye a quienes niegan la enseñanza acerca de Cristo."
+  ],
+  [
+    "Gayo es elogiado por su hospitalidad y apoyo a hermanos viajeros. Diótrefes es censurado por buscar protagonismo, mientras Demetrio recibe un buen testimonio."
+  ],
+  [
+    "Judas exhorta a luchar por la fe frente a personas inmorales que se infiltran en la congregación. Recuerda ejemplos de juicio y anima a mantenerse en el amor de Dios y ayudar a quienes dudan."
+  ],
+  [
+    "Juan recibe una visión de Cristo glorificado y mensajes para siete congregaciones. Cada una recibe elogios, correcciones y promesas que ayudan a mantenerse fieles.",
+    "Juan contempla el trono celestial, el rollo sellado y al Cordero digno de abrirlo. Los primeros sellos revelan jinetes, persecución y conmociones, mientras una gran muchedumbre recibe protección.",
+    "Se abren nuevos sellos y suenan trompetas que anuncian juicios. Aparecen el rollito, dos testigos, la mujer, el dragón y bestias que representan oposición política y religiosa.",
+    "El Cordero y sus seguidores permanecen fieles. Se proclaman mensajes angelicales, se derraman copas de ira y Babilonia la Grande es expuesta y destruida por su corrupción.",
+    "El cielo celebra la caída de Babilonia y Cristo vence a sus enemigos. Satanás es eliminado, ocurre el juicio final y aparecen un nuevo cielo, una nueva tierra y la Nueva Jerusalén."
+  ]
+];
+
 /* Capítulos que aporta un grupo (casos especiales de Salmos incluidos) */
 function capsDeGrupo(etiqueta){
   if(etiqueta === "116-119:63") return 3;   // Sal 116-118 y comienza el 119
@@ -1184,6 +1720,8 @@ function marcarPlanLeido(){
 function pintarPlan(){
   var eyebrow = document.getElementById("planEyebrow");
   var lectura = document.getElementById("planLectura");
+  var resumenWrap = document.getElementById("planResumenWrap");
+  var resumen = document.getElementById("planResumen");
   var detalle = document.getElementById("planDetalle");
   var acciones = document.getElementById("planAcciones");
   var barraWrap = document.getElementById("planBarraWrap");
@@ -1192,6 +1730,8 @@ function pintarPlan(){
 
   if(!p){
     lectura.textContent = "Elige un libro para empezar";
+    resumen.textContent = "";
+    resumenWrap.style.display = "none";
     detalle.textContent = "Selecciona un libro abajo y toca «Empezar a leer» para recibir cada día el grupo de capítulos que recomienda el programa de lectura.";
     acciones.style.display = "none";
     barraWrap.style.display = "none";
@@ -1202,12 +1742,19 @@ function pintarPlan(){
     var pct = Math.round(p.completados / grupos.length * 100);
     if(p.completados >= grupos.length){
       lectura.textContent = "¡Terminaste " + nombre + "! 🌿";
+      resumen.textContent = "";
+      resumenWrap.style.display = "none";
       detalle.textContent = "Completaste los " + grupos.length + " grupos del programa. Elige tu próximo libro abajo y toca «Empezar a leer».";
       acciones.style.display = "none";
     }else{
       var etiqueta = grupos[p.completados];
       var caps = capsDeGrupo(etiqueta);
       lectura.textContent = nombre + " " + etiqueta;
+      var resumenHoy = (PLAN_RESUMENES[p.libro] && PLAN_RESUMENES[p.libro][p.completados])
+        ? PLAN_RESUMENES[p.libro][p.completados]
+        : "Resumen no disponible para esta lectura.";
+      resumen.textContent = resumenHoy;
+      resumenWrap.style.display = "block";
       detalle.textContent = "Grupo " + (p.completados+1) + " de " + grupos.length + " del programa · "
         + caps + (caps===1 ? " capítulo" : " capítulos")
         + ". Al marcarlo como leído se registra automáticamente en tus estadísticas de hoy.";
